@@ -14,6 +14,9 @@ class Player : public GameObject{
         void set_angle_mouse(int mouse_x, int win_w_without_borders, int border);
 
         double get_angle_degs();
-        Player(double spd){ speed = spd; }
+        Player(int x, int y, double spd){ 
+            pos = {x, y};
+            speed = spd;
+        }
 };
 #endif

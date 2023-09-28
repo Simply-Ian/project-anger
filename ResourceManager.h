@@ -6,6 +6,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "nlohmann/json.hpp"
 #include <iostream>
+#include <exception>
 
 sf::Color color_from_hex(std::string hex);
 
@@ -25,15 +26,21 @@ struct ResourceManager{
             std::string name;
             sf::Vector2i size;
             sf::Color skycolor;
+            double player_x;
+            double player_y;
 
-            Level(std::string n, int w, int h, sf::Color skclr) : name(n), size(w, h), skycolor(skclr){
+            Level(std::string n, int w, int h, sf::Color skclr, double pl_x, double pl_y) : name(n), size(w, h), 
+                        skycolor(skclr), player_x(pl_x), player_y(pl_y){
                 lvl_map = std::make_unique<Block[]>(w * h);
             }
 
             Level(){}
 
-            Block get_block(int x, int y){
-                return lvl_map[y * size.x + x];
+            Block get_block(int x, int y) const {
+                if (x >= 0 && size.x > x && y >= 0 && size.y > y)
+                    return lvl_map[y * size.x + x];
+                else throw std::range_error{std::string("Invalid block position: x=") + std::to_string(x) 
+                                            + ", y=" + std::to_string(y)};
             }
 
             void set_block(const Block b, int x, int y){
@@ -56,6 +63,8 @@ struct ResourceManager{
     sf::Color text_color;
     int small_text_size{12};
     double player_speed;
+    double player_x = 0;
+    double player_y = 0;
 
     void load_settings_file();
     void load_level(std::string path);

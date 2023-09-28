@@ -1,7 +1,7 @@
 CXX=g++
 C_FLAGS=-g -std=c++17 -fdiagnostics-color=always
 LDFLAGS=-lsfml-graphics -lsfml-system -lsfml-window
-SRCS = conversions/rads_degs.cpp ResourceManager.cpp WinManager.cpp main.cpp os/exec.cpp os/get_default_font_filename.cpp Player.cpp GameObject.cpp
+SRCS = conversions/rads_degs.cpp ResourceManager.cpp WinManager.cpp main.cpp os/exec.cpp os/get_default_font_filename.cpp Player.cpp GameObject.cpp Camera.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 .PHONY: clean

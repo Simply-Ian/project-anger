@@ -14,7 +14,7 @@ WinManager::WinManager(ResourceManager* r, ObjectManager* o) : R(r), O(o){
     win.setFramerateLimit(200);
     font.loadFromFile(get_default_font_filename());
     mapView = sf::View{sf::FloatRect{0, 0, R->mini_map_screensize, R->mini_map_screensize}};
-    mini_map.create(R->lvl.size.x * 10, R->lvl.size.y * 10);
+    mini_map.create(R->lvl.size.x * 30, R->lvl.size.y * 30);
     mini_map.setView(mapView);
 
     mapSprite.setPosition(5, 5);
@@ -57,13 +57,17 @@ void WinManager::loop(){
             handleKeyboard(framelength);
             handleMouse();
         }
+
+        /// @todo 
+        O->cam.setPos(O->player.getPos());
+        O->cam.set_angle_degs(O->player.get_angle_degs());
         
         FPS = std::floor(1000 / framelength);
         FPS_label.setString("FPS: " + std::to_string(FPS));
 
         player_pos_label.setString("x: " + to_string(O->player.getPos().x) + ", y=" + to_string(O->player.getPos().y) +
-                                     ", a=" + to_string(O->player.get_angle_degs()) + "\ndirx: " + to_string(O->player.dir.x) + 
-                                     ", diry: "  + to_string(O->player.dir.y));
+                                     ", a=" + to_string(O->player.get_angle_degs()));// + "\ndirx: " + to_string(O->player.dir.x) + 
+                                     //", diry: "  + to_string(O->player.dir.y));
         buffer.display();
         canvas.setTexture(buffer.getTexture());
         win.draw(canvas);
@@ -114,10 +118,12 @@ void WinManager::handleKeyboard(double fl){
 }
 
 void WinManager::draw_minimap(){
-    const float block_size = 10.f;
+    auto inverse_y = [&](int it_y){return mini_map.getSize().y - it_y;};
+
+    const float block_size = 30.f;
     // SFML использует систему координат с Oy, направленной вниз; система координат движка -- с Oy, направленной вверх.
     const float player_screen_x = O->player.getPos().x * block_size;
-    const float player_screen_y = mini_map.getSize().y - O->player.getPos().y*block_size;
+    const float player_screen_y = inverse_y(O->player.getPos().y*block_size);
     mapView.setCenter({player_screen_x, player_screen_y});
     mini_map.setView(mapView);
 
@@ -128,19 +134,34 @@ void WinManager::draw_minimap(){
             if (!bl.is_a_null_block){
                 sf::RectangleShape rect({block_size, block_size});
                 rect.setFillColor(bl.color);
-                rect.setPosition(x * block_size, mini_map.getSize().y - y * block_size);
+                rect.setPosition(x * block_size, inverse_y(y * block_size) - block_size);
                 mini_map.draw(rect);
             }
         }
     }
-    sf::CircleShape player_dot(9, 3);
-    player_dot.setOrigin(9, 9);
+    sf::RectangleShape player_dot({block_size, 2});
+    player_dot.setOrigin(block_size / 2, 1);
     player_dot.setFillColor(sf::Color(0, 255, 0));
     player_dot.setPosition(sf::Vector2f{player_screen_x, player_screen_y});
     player_dot.setRotation(-O->player.get_angle_degs() + 90); // Треугольник по умолчанию смотрит углом вверх
     mini_map.draw(player_dot);
-    mini_map.display();
 
+    // Рисуем видимые поверхности
+    for (double offset = 0; offset < R->screen_res.x; offset++){
+        sf::Vector2f touch_pos = O->cam.get_touchdown_coords(offset * (1.0 / R->screen_res.x));
+        sf::RectangleShape dot{{2, 2}};
+        dot.setFillColor(sf::Color::Magenta);
+        dot.setPosition(touch_pos.x * block_size, inverse_y(touch_pos.y * block_size));
+        mini_map.draw(dot);
+    }
+
+    sf::Text zero{"(0, 0)", font, R->small_text_size};
+    zero.setFillColor(R->text_color);
+    zero.setPosition(0, inverse_y(0));
+    mini_map.draw(zero);
+
+
+    mini_map.display();
     mapSprite.setTexture(mini_map.getTexture());
     win.draw(mapSprite);
 }

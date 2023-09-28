@@ -10,11 +10,10 @@ class GameObject{
         double speed = 0;
         // sf::Vector2f dir;
         sf::Vector2f pos;
-
+        sf::Vector2f dir;
         sf::FloatRect collide_box;
 
     public:
-        sf::Vector2f dir; /// Только на время отладки
         sf::Vector2f getPos();
         /// @brief Устанавливает направление объекта.
         /// @param angle Угол в радианах

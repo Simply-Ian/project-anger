@@ -49,7 +49,6 @@ void ResourceManager::load_settings_file(){
             small_text_size = atoi(value.c_str()) ? atoi(value.c_str()) : 12;
         else if (ident == "player-speed")
             player_speed = atof(value.c_str());
-
     }
 }
 
@@ -81,13 +80,9 @@ void ResourceManager::load_level(std::string path){
     lvl = Level{header["lvl_name"].template get<std::string>(), 
                 header["width"].template get<int>(),
                 header["height"].template get<int>(),
-                color_from_hex(header["skycolor"].template get<std::string>())};
-    // Забиваем матрицу "нулями"
-    // for (int i = 0; i < lvl.size.x; i++){
-    //     for (int k = 0; k < lvl.size.y; k++){
-    //         lvl.set_block(Block(sf::Color::White, true), i, k);
-    //     }
-    // }
+                color_from_hex(header["skycolor"].template get<std::string>()),
+                header["player-x"].template get<double>(),
+                header["player-y"].template get<double>()};
 
     auto blocks = j["walls"];
     for (auto iter = blocks.begin(); iter != blocks.end(); iter++){
