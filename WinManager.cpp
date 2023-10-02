@@ -23,7 +23,7 @@ WinManager::WinManager(ResourceManager* r, ObjectManager* o) : R(r), O(o){
 
 void WinManager::loop(){
     sf::Clock q;
-    int framelength;
+    int framelength = 5;
     sf::Text FPS_label("0", font);
     sf::Text player_pos_label("", font);
     sf::Text player_angle_label("", font);
@@ -68,8 +68,8 @@ void WinManager::loop(){
         player_pos_label.setString("x: " + to_string(O->player.getPos().x) + ", y=" + to_string(O->player.getPos().y) +
                                      ", a=" + to_string(O->player.get_angle_degs()));// + "\ndirx: " + to_string(O->player.dir.x) + 
                                      //", diry: "  + to_string(O->player.dir.y));
-        buffer.display();
-        canvas.setTexture(buffer.getTexture());
+        sf::RenderTexture* image = O->cam.getImage();
+        canvas.setTexture(image->getTexture());
         win.draw(canvas);
         win.draw(FPS_label);
         win.draw(player_pos_label);
@@ -77,6 +77,7 @@ void WinManager::loop(){
         draw_minimap();
 
         win.display();
+        delete image;
         framelength = q.getElapsedTime().asMilliseconds();
     }
 }
@@ -139,21 +140,21 @@ void WinManager::draw_minimap(){
             }
         }
     }
-    sf::RectangleShape player_dot({block_size, 2});
-    player_dot.setOrigin(block_size / 2, 1);
+    sf::RectangleShape player_dot({R->camera_plane_width * block_size, 2});
+    player_dot.setOrigin(player_dot.getSize().x / 2, 1);
     player_dot.setFillColor(sf::Color(0, 255, 0));
     player_dot.setPosition(sf::Vector2f{player_screen_x, player_screen_y});
     player_dot.setRotation(-O->player.get_angle_degs() + 90); // Треугольник по умолчанию смотрит углом вверх
     mini_map.draw(player_dot);
 
     // Рисуем видимые поверхности
-    for (double offset = 0; offset < R->screen_res.x; offset++){
-        sf::Vector2f touch_pos = O->cam.get_touchdown_coords(offset * (1.0 / R->screen_res.x));
-        sf::RectangleShape dot{{2, 2}};
-        dot.setFillColor(sf::Color::Magenta);
-        dot.setPosition(touch_pos.x * block_size, inverse_y(touch_pos.y * block_size));
-        mini_map.draw(dot);
-    }
+    // for (double offset = 0; offset < R->screen_res.x; offset++){
+    //     sf::Vector2f touch_pos = O->cam.get_touchdown_coords(offset * (1.0 / R->screen_res.x)).pos;
+    //     sf::RectangleShape dot{{2, 2}};
+    //     dot.setFillColor(sf::Color::Magenta);
+    //     dot.setPosition(touch_pos.x * block_size, inverse_y(touch_pos.y * block_size));
+    //     mini_map.draw(dot);
+    // }
 
     sf::Text zero{"(0, 0)", font, R->small_text_size};
     zero.setFillColor(R->text_color);

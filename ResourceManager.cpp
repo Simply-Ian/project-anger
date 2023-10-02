@@ -49,6 +49,8 @@ void ResourceManager::load_settings_file(){
             small_text_size = atoi(value.c_str()) ? atoi(value.c_str()) : 12;
         else if (ident == "player-speed")
             player_speed = atof(value.c_str());
+        else if (ident == "camera-plane-width")
+            camera_plane_width = atof(value.c_str());
     }
 }
 
@@ -81,6 +83,8 @@ void ResourceManager::load_level(std::string path){
                 header["width"].template get<int>(),
                 header["height"].template get<int>(),
                 color_from_hex(header["skycolor"].template get<std::string>()),
+                header["light-brightness"].template get<double>(),
+                header["light-decay-factor"].template get<double>(),
                 header["player-x"].template get<double>(),
                 header["player-y"].template get<double>()};
 

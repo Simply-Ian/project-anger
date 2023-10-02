@@ -28,9 +28,11 @@ struct ResourceManager{
             sf::Color skycolor;
             double player_x;
             double player_y;
+            double brightness;
+            double decay_factor;
 
-            Level(std::string n, int w, int h, sf::Color skclr, double pl_x, double pl_y) : name(n), size(w, h), 
-                        skycolor(skclr), player_x(pl_x), player_y(pl_y){
+            Level(std::string n, int w, int h, sf::Color skclr, double br, double dec, double pl_x, double pl_y) : name(n), size(w, h), 
+                        skycolor(skclr), brightness(br), decay_factor(dec), player_x(pl_x), player_y(pl_y){
                 lvl_map = std::make_unique<Block[]>(w * h);
             }
 
@@ -65,6 +67,7 @@ struct ResourceManager{
     double player_speed;
     double player_x = 0;
     double player_y = 0;
+    double camera_plane_width = 1;
 
     void load_settings_file();
     void load_level(std::string path);
