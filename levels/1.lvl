@@ -8,7 +8,7 @@
         "player-x": 6,
         "player-y": 2,
         "light-brightness": 0.6,
-        "light-decay-factor": 15
+        "light-decay-factor": 8
     },
     "walls": [
         {"x":0, "y":0, "color": "#ffffff"},

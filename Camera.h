@@ -12,6 +12,7 @@ struct touchdownData{
     enum Side {Top, Bottom, Right, Left};
     Side side;
     Block block;
+    bool valid = false;
 };
 
 // /// @brief Представляет один столбец пикселей в изображении стены.
@@ -45,6 +46,32 @@ class Camera: public GameObject{
         /// @brief Возвращает координаты первого столкновения луча со стеной
         /// @param start_x -- смещение по зрительной плоскости относительно ее левого конца (в долях от 1)
         touchdownData get_touchdown_coords(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane);
+
+        /// @brief Возвращает координаты пересечения луча зрения и прямой с y = const (горизонтальной линией сетки)
+        // start_x, start_y -- глобальные координаты точки, из которой выходит луч
+        // line_y -- координата линии сетки, с которой ищется пересечение
+        // ray_coords -- координаты вектора, вдоль которого лежит луч зрения
+        double hor_intersect(int line_y, double start_x, double start_y, sf::Vector2f ray_coords) const;
+
+        /// @brief Возвращает координаты пересечения луча зрения и прямой с x = const (вертикальной линией сетки)
+        // start_x, start_y -- глобальные координаты точки, из которой выходит луч
+        // line_y -- координата линии сетки, с которой ищется пересечение
+        // ray_coords -- координаты вектора, вдоль которого лежит луч зрения
+        double vert_intersect(int line_x, double start_x, double start_y, sf::Vector2f ray_coords) const;
+
+        /// @brief Метод, ищущий точку пересечения заданного луча с вертикальной стенкой некоторого блока
+        /// @return объект touchdownData с данными о позиции касания и увиденном блоке
+        touchdownData get_point_on_vert_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
+
+        /// @brief Метод, ищущий точку пересечения заданного луча с горизонтальной стенкой некоторого блока
+        /// @return объект touchdownData с данными о позиции касания и увиденном блоке
+        touchdownData get_point_on_hor_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
+
+        /// @brief Рассчитывает расстояние от заданной точки до ПРЯМОЙ (не отрезка!), представляющей плоскость камеры
+        /// @param point_pos глобальные координаты точки
+        /// @param plane_vect координаты вектора, задабщего плоскость камеры (повернутый dir, длина всегда равна 1)
+        /// @return расстояние от точки до прямой
+        double calculate_dist_plane_to_point(sf::Vector2f point_pos, sf::Vector2f plane_vect);
 
         void setPos(sf::Vector2f new_pos){ 
             if ((pos.x >= 0 && pos.x <= level.size.x) && (pos.y >= 0 && pos.y <= level.size.y))
