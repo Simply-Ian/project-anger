@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include <memory>
 #include "ResourceManager.h"
+#include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
@@ -27,20 +28,21 @@ class Camera: public GameObject{
     double distance_to_plane = 1.5;
     const ResourceManager::Level& level;
     sf::Vector2u screen_res;
+
+    /// @brief  Текстура, на которую отрисовывается текущий кадр в getImage(). 
+    sf::RenderTexture cur_image;
+
     public:
-        Camera(const ResourceManager::Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
-            pos = {x, y};
-        }
-        Camera(const ResourceManager::Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
-                                    Camera(lvl, x, y, s_r){
-            plane_width = pw;
-            distance_to_plane = d_t_p;
-        }
+        /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,
+        /// необходимо обратиться к этой текстуре
+        sf::Texture shot;
+
+        Camera(const ResourceManager::Level& lvl, double x, double y, sf::Vector2u s_r);
+        Camera(const ResourceManager::Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r);
 
         /// @brief Метод для рендеринга изображения, видимого камерой
         /// @param single_height экранная высота стены высотой 1
-        /// @return Готовое к отрисовке изображение
-        sf::RenderTexture* getImage();
+        void takeImage();
 
         // Публичная только на время отладки
         /// @brief Возвращает координаты первого столкновения луча со стеной

@@ -2,8 +2,20 @@
 #include <cmath>
 #include <algorithm>
 #include <SFML/Graphics/RectangleShape.hpp>
-#include <SFML/Graphics/RenderTexture.hpp>
 #include <algorithm>
+
+Camera::Camera(const ResourceManager::Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
+    pos = {x, y};
+    cur_image.create(screen_res.x, screen_res.y);
+    shot.create(screen_res.x, screen_res.y);
+    shot.setSmooth(true);
+}
+
+Camera::Camera(const ResourceManager::Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
+                                    Camera(lvl, x, y, s_r){
+    plane_width = pw;
+    distance_to_plane = d_t_p;
+}
 
 double Camera::hor_intersect(int line_y, double start_x, double start_y, sf::Vector2f ray_coords) const {
     return start_x + (line_y - start_y) * (ray_coords.x / ray_coords.y);
@@ -103,13 +115,12 @@ double Camera::calculate_dist_plane_to_point(sf::Vector2f point_pos, sf::Vector2
     return std::sin(alpha) * point_to_point;
 }
 
-sf::RenderTexture* Camera::getImage(){
+void Camera::takeImage(){
+    cur_image.clear();
     auto multiply_color = [](sf::Color source, double factor) -> sf::Color {
         return {source.r * factor, source.g * factor,  source.b * factor};
     };
     const double glob_lighting_factors[] = {level.brightness, level.brightness * 0.5, level.brightness * 0.75, level.brightness * 0.75};
-    sf::RenderTexture* image = new sf::RenderTexture;
-    image->create(screen_res.x, screen_res.y);
 
     double plane_to_point;
     double brightness;
@@ -133,8 +144,8 @@ sf::RenderTexture* Camera::getImage(){
         brightness = std::max(brightness * (1 - plane_to_point/level.decay_factor), 0.0);
         drawableStrip.setFillColor(multiply_color(seen_point.block.color, brightness));
         drawableStrip.setPosition(offset, (screen_res.y - strip_height) / 2);
-        image->draw(drawableStrip);
+        cur_image.draw(drawableStrip);
     }
-    image->display();
-    return image;
+    cur_image.display();
+    shot = cur_image.getTexture();
 }

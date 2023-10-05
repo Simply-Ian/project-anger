@@ -68,8 +68,8 @@ void WinManager::loop(){
         player_pos_label.setString("x: " + to_string(O->player.getPos().x) + ", y=" + to_string(O->player.getPos().y) +
                                      ", a=" + to_string(O->player.get_angle_degs()));// + "\ndirx: " + to_string(O->player.dir.x) + 
                                      //", diry: "  + to_string(O->player.dir.y));
-        sf::RenderTexture* image = O->cam.getImage();
-        canvas.setTexture(image->getTexture());
+        O->cam.takeImage();
+        canvas.setTexture(O->cam.shot);
         win.draw(canvas);
         win.draw(FPS_label);
         win.draw(player_pos_label);
@@ -77,7 +77,6 @@ void WinManager::loop(){
         draw_minimap();
 
         win.display();
-        delete image;
         framelength = q.getElapsedTime().asMilliseconds();
     }
 }

@@ -27,5 +27,7 @@ class GameObject{
         /// @param vector -- вектор, вдоль которого двигается объект. Параметр нужен, чтобы класс-наследник Player
         /// мог делать стрейфы
         void move(double framelength, sf::Vector2f vector);
+        
+        // virtual void update() const = 0;
 };
 #endif
