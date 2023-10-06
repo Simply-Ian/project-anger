@@ -11,7 +11,6 @@
 
 class WinManager{
     sf::RenderWindow win{sf::VideoMode::getDesktopMode(), "Project Anger"};
-    sf::RenderTexture buffer;
     sf::Sprite canvas;
 
     sf::RenderTexture mini_map;

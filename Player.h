@@ -13,7 +13,6 @@ class Player : public GameObject{
         /// @param mouse_x X-координата курсора
         void set_angle_mouse(int mouse_x, int win_w_without_borders, int border);
 
-        double get_angle_degs();
         Player(int x, int y, double spd){ 
             pos = {x, y};
             speed = spd;

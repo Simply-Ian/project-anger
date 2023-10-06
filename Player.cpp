@@ -16,8 +16,3 @@ void Player::move(int ws, int ad, double framelength){
 void Player::set_angle_mouse(int mouse_x, int win_w_without_borders, int border){
     set_angle_degs(180*(win_w_without_borders - 2*(mouse_x - 2*border)) / win_w_without_borders);
 }
-
-double Player::get_angle_degs(){
-    double mod_rads = atan2(dir.y, dir.x);
-    return to_degs(mod_rads);
-}
