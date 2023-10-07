@@ -1,8 +1,8 @@
 #ifndef ANGER_PLAYER
 #define ANGER_PLAYER
-#include "GameObject.h"
+#include "anger_engine/Camera.h"
 
-class Player : public GameObject{
+class Player : public anger::Camera{
     public:
         /// @brief Функция, принимающая нажатые клавиши клавиатуры и двигающая игрока
         /// @param ws Принимает одно из трех значений: -1, 0, 1. -1 означает нажатую клавишу S, 1 -- W, 0 -- ни S, ни W не нажаты
@@ -13,7 +13,8 @@ class Player : public GameObject{
         /// @param mouse_x X-координата курсора
         void set_angle_mouse(int mouse_x, int win_w_without_borders, int border);
 
-        Player(int x, int y, double spd){ 
+        Player(double x, double y, double spd, const anger::Level& level, double plane_width, double d_t_p, 
+                    sf::Vector2u screen_res) : anger::Camera(level, x, y, plane_width, d_t_p, screen_res){ 
             pos = {x, y};
             speed = spd;
         }

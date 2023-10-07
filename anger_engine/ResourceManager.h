@@ -8,20 +8,18 @@
 #include <iostream>
 #include <exception>
 
-sf::Color color_from_hex(std::string hex);
-
-struct Block{
-    sf::Color color;
-    bool is_a_null_block=false;
-    Block(sf::Color c, bool is_null) : color(c), is_a_null_block(is_null) {}
-    Block() : color(sf::Color::White), is_a_null_block(true){}
-};
-
-struct ResourceManager{
+namespace anger{
+    struct Block{
+        sf::Color color;
+        bool is_a_null_block=false;
+        Block(sf::Color c, bool is_null) : color(c), is_a_null_block(is_null) {}
+        Block() : color(sf::Color::White), is_a_null_block(true){}
+    };
+    
     struct Level{
         private:
             std::unique_ptr<Block[]> lvl_map;
-        
+
         public:
             std::string name;
             sf::Vector2i size;
@@ -55,21 +53,17 @@ struct ResourceManager{
                 std::cout << "Unable to set block (x: " << x << ", y: " << y << "). Invalid position" << std::endl;
             }
     };
+    sf::Color color_from_hex(std::string hex);
 
-    Level lvl;
-    sf::Vector2u screen_res;
-    bool is_paused;
-    // Угол зрения в градусах
-    double FOV;
-    int mini_map_screensize;
-    sf::Color text_color;
-    int small_text_size{12};
-    double player_speed;
-    double player_x = 0;
-    double player_y = 0;
-    double camera_plane_width = 1;
+    /// @brief Абстрактный класс, предназначен для хранения и загрузки из файла ресурсов
+    struct ResourceManager{
+        Level lvl;
+        // Угол зрения в градусах
+        double FOV;
+        double camera_plane_width = 1;
 
-    void load_settings_file();
-    void load_level(std::string path);
-};
+        virtual void load_settings_file(std::string path) = 0;
+        virtual void load_level(std::string path) = 0;
+    };
+}
 #endif

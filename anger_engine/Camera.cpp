@@ -3,15 +3,15 @@
 #include <algorithm>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <algorithm>
+using namespace anger;
 
-Camera::Camera(const ResourceManager::Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
+Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
     pos = {x, y};
     cur_image.create(screen_res.x, screen_res.y);
     shot.create(screen_res.x, screen_res.y);
-    shot.setSmooth(true);
 }
 
-Camera::Camera(const ResourceManager::Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
+Camera::Camera(const Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
                                     Camera(lvl, x, y, s_r){
     plane_width = pw;
     distance_to_plane = d_t_p;
@@ -148,4 +148,5 @@ void Camera::takeImage(){
     }
     cur_image.display();
     shot = cur_image.getTexture();
+    shot.setSmooth(true);
 }

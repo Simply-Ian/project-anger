@@ -12,7 +12,7 @@ void GameObject::set_angle_rads(double angle){
 }
 
 void GameObject::set_angle_degs(double angle){
-    set_angle_rads(to_rads(angle));
+    set_angle_rads(anger::to_rads(angle));
 }
 
 void GameObject::move(double framelength, sf::Vector2f vector){
@@ -21,5 +21,5 @@ void GameObject::move(double framelength, sf::Vector2f vector){
 
 double GameObject::get_angle_degs(){
     double mod_rads = atan2(dir.y, dir.x);
-    return to_degs(mod_rads);
+    return anger::to_degs(mod_rads);
 }
