@@ -2,13 +2,16 @@
 #include <cmath>
 #include <algorithm>
 #include <SFML/Graphics/RectangleShape.hpp>
-#include <algorithm>
+#include <iostream>
 using namespace anger;
 
 Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
     pos = {x, y};
     cur_image.create(screen_res.x, screen_res.y);
+    cur_image.setSmooth(true);
     shot.create(screen_res.x, screen_res.y);
+    strip_px_buffer.create(1, 1080);
+    strip_texture.create(1, 1080);
 }
 
 Camera::Camera(const Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
@@ -30,7 +33,7 @@ touchdownData Camera::get_point_on_vert_line(sf::Vector2f ray_coords, double dot
     // Точка ближайшего пересечения с вертикальной линией. Фиксированный X
     //Начальное значение y-координаты точки пересечения
     double init_y = vert_intersect(line_x, dot_x, dot_y, ray_coords);
-    touchdownData first_point = {{line_x, init_y}, ray_coords.x > 0? touchdownData::Side::Left : touchdownData::Side::Right,
+    touchdownData first_point = {{line_x, init_y}, ray_coords.x > 0? anger::Block::Side::Left : anger::Block::Side::Right,
                                 {}};
     double new_y = init_y;
     Block touched;
@@ -60,7 +63,7 @@ touchdownData Camera::get_point_on_hor_line(sf::Vector2f ray_coords, double dot_
     // Точка ближайшего пересечения с горизонтальной линией. Фиксированный Y
     int line_y = ray_coords.y > 0 ? ceil(dot_y) : floor(dot_y);
     double init_x = hor_intersect(line_y, dot_x, dot_y, ray_coords);
-    touchdownData second_point = {{init_x, line_y}, ray_coords.y > 0? touchdownData::Side::Bottom : touchdownData::Side::Top,
+    touchdownData second_point = {{init_x, line_y}, ray_coords.y > 0? anger::Block::Side::Bottom : anger::Block::Side::Top,
                                 {}, false};
     Block touched;
     if (0 <= init_x && init_x < level.size.x){
@@ -115,17 +118,19 @@ double Camera::calculate_dist_plane_to_point(sf::Vector2f point_pos, sf::Vector2
     return std::sin(alpha) * point_to_point;
 }
 
+sf::Color Camera::multiply_color(sf::Color source, double factor){
+    return {std::min(source.r * factor, 255.0), std::min(source.g * factor, 255.0), std::min(source.b * factor, 255.0)};
+}
+
 void Camera::takeImage(){
     cur_image.clear();
-    auto multiply_color = [](sf::Color source, double factor) -> sf::Color {
-        return {source.r * factor, source.g * factor,  source.b * factor};
-    };
     const double glob_lighting_factors[] = {level.brightness, level.brightness * 0.5, level.brightness * 0.75, level.brightness * 0.75};
 
     double plane_to_point;
     double brightness;
     int raw_strip_height;
     int strip_height;
+    sf::RectangleShape drawableStrip{{1, 0}};
     double start_x;
     for (double offset = 0; offset < screen_res.x; offset++){
         start_x = offset * (1.0 / screen_res.x);
@@ -137,16 +142,64 @@ void Camera::takeImage(){
 
         plane_to_point = calculate_dist_plane_to_point(seen_point.pos, plane_vect);
         raw_strip_height = screen_res.y  / plane_to_point;
-        strip_height = std::min(raw_strip_height, static_cast<int>(screen_res.y));
-        sf::RectangleShape drawableStrip{{1, strip_height}};
-
         brightness = glob_lighting_factors[seen_point.side];
         brightness = std::max(brightness * (1 - plane_to_point/level.decay_factor), 0.0);
-        drawableStrip.setFillColor(multiply_color(seen_point.block.color, brightness));
-        drawableStrip.setPosition(offset, (screen_res.y - strip_height) / 2);
-        cur_image.draw(drawableStrip);
+
+        // Если блок просто закрашен цветом и не имеет текстур
+        if (seen_point.block.t_right == nullptr){
+            strip_height = std::min(raw_strip_height, static_cast<int>(screen_res.y));
+            drawableStrip.setSize({1, strip_height});
+            drawableStrip.setFillColor(multiply_color(seen_point.block.color, brightness));
+            drawableStrip.setPosition(offset, (screen_res.y - strip_height) / 2);
+            cur_image.draw(drawableStrip);
+        }
+        // Блок затекстурирован
+        else {
+            int texture_offset;
+            int texture_width;
+            std::shared_ptr<sf::Image> skin;
+
+            if (seen_point.side == anger::Block::Side::Top){
+                texture_width = seen_point.block.t_top->getSize().x;
+                texture_offset = texture_width * (1 - (seen_point.pos.x - std::floor(seen_point.pos.x)));
+                skin = seen_point.block.t_top;
+            }
+            else if (seen_point.side == anger::Block::Side::Bottom){
+                texture_width = seen_point.block.t_bottom->getSize().x;
+                texture_offset = texture_width * (seen_point.pos.x - std::floor(seen_point.pos.x));
+                skin = seen_point.block.t_bottom;
+            }
+            else if (seen_point.side == anger::Block::Side::Left){
+                texture_width = seen_point.block.t_left->getSize().x;
+                texture_offset = texture_width * (seen_point.pos.y - std::floor(seen_point.pos.y));
+                skin = seen_point.block.t_left;
+            }
+            else if (seen_point.side == anger::Block::Side::Right){
+                texture_width = seen_point.block.t_right->getSize().x;
+                texture_offset = texture_width * (1 - (seen_point.pos.y - std::floor(seen_point.pos.y)));
+                skin = seen_point.block.t_right;
+            }
+            bake_strip(texture_offset, raw_strip_height, brightness, skin);
+            strip.setPosition(offset, (screen_res.y - strip.getGlobalBounds().height) / 2);
+            cur_image.draw(strip);
+        }
     }
     cur_image.display();
     shot = cur_image.getTexture();
-    shot.setSmooth(true);
+}
+
+void Camera::bake_strip(int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin){
+    const int source_height = skin->getSize().y;
+    // Копируем столбец пикселов из оригинальной текстуры стены в буфер для затемнения
+    /// @todo Убрать std::min
+    // strip_px_buffer.copy(*skin, 0, 0, {std::min(x_offset, 1079), 0, 1, source_height});
+
+    // Применяем затемнение
+    for (size_t adv = 0; adv < source_height; adv++){
+        strip_px_buffer.setPixel(0, adv, multiply_color(skin->getPixel(x_offset, adv), brightness));
+    }
+    strip_texture.update(strip_px_buffer);
+    strip.setTexture(strip_texture);
+    strip.setScale(1, static_cast<float>(h) / source_height);
+    int strip_size = strip.getGlobalBounds().height;
 }

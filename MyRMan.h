@@ -2,6 +2,20 @@
 #define PROJANGER_MYRMAN
 #include "anger_engine/ResourceManager.h"
 #include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics/Image.hpp>
+#include <map>
+#include <vector>
+#include <memory>
+
+class MyLevel : public anger::Level{
+    public:
+        MyLevel(std::string n, int w, int h, double br, double dec, double pl_x, double pl_y) : 
+            anger::Level(n, w, h, br, dec, pl_x, pl_y){}
+        std::map<std::string, std::shared_ptr<sf::Image>> textures;
+        MyLevel() : Level(){}
+
+        void load_textures(std::vector<std::string> textures_names);
+};
 
 class MyRMan : public anger::ResourceManager{
     /// @brief Зависимость MyRMan::load_settings_file(). Устанавливает заданному полю заданное значение при чтении файла настроек,
@@ -11,14 +25,13 @@ class MyRMan : public anger::ResourceManager{
     void set_up_field(std::string ident, std::string value);
 
     public:
+        MyLevel lvl;
         void load_level(std::string path) override;
         void load_settings_file(std::string path) override;
         int mini_map_screensize;
         sf::Color text_color;
         int small_text_size{12};
         double player_speed;
-        double player_x = 0;
-        double player_y = 0;
         sf::Font font;
         MyRMan();
 };

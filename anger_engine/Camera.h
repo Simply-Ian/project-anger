@@ -6,13 +6,13 @@
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 
 namespace anger{
     /// @brief Информация о точке касания лучом стены
     struct touchdownData{
         sf::Vector2f pos;
-        enum Side {Top, Bottom, Right, Left};
-        Side side;
+        anger::Block::Side side;
         anger::Block block;
         bool valid = false;
     };
@@ -25,6 +25,31 @@ namespace anger{
 
         /// @brief  Текстура, на которую отрисовывается текущий кадр в getImage(). 
         sf::RenderTexture cur_image;
+
+        /// @brief Спрайт, представляющий собой столбец пикселов шириной в 1 px. При отрисовке текстурированных стен этому спрайту
+        /// последовательно присваивается текстура блока (с уже рассчитанной яркостью пикселов), после чего спрайт сжимается и
+        /// отрисовывается.
+        sf::Sprite strip;
+
+        /// @brief Изображение 1x1080. В это изображение копируются незатемненные пиксели текстур стен, после чего к ним применяется
+        /// затемнение.
+        sf::Image strip_px_buffer;
+
+        /// @brief Текстура, которая назначается спрайту strip
+        sf::Texture strip_texture;
+
+        /// @brief Готовит к отрисовке спрайт strip, задавая ему необходимые высоту, текстуру, высоту, яркость.
+        /// @param x_offset Смещение столбца пикселов в исходном изображении относительно левого края изображения
+        /// @param h Высота столбца
+        /// @param brightness Коэффициент яркости
+        /// @param skin Указатель на текстуру
+        void bake_strip(int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin);
+
+        /// @brief Умножает все компоненты заданного цвета на заданный коэффициент. Используется для затемнения
+        /// @param source Исходный цвет
+        /// @param factor Коэффициент
+        /// @return Затемненный цвет
+        static sf::Color multiply_color(sf::Color source, double factor);
 
         public:
             /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,

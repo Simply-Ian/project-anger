@@ -7,15 +7,10 @@
 #include "nlohmann/json.hpp"
 #include <iostream>
 #include <exception>
+#include <array>
+#include "Block.h"
 
 namespace anger{
-    struct Block{
-        sf::Color color;
-        bool is_a_null_block=false;
-        Block(sf::Color c, bool is_null) : color(c), is_a_null_block(is_null) {}
-        Block() : color(sf::Color::White), is_a_null_block(true){}
-    };
-    
     struct Level{
         private:
             std::unique_ptr<Block[]> lvl_map;
@@ -23,14 +18,13 @@ namespace anger{
         public:
             std::string name;
             sf::Vector2i size;
-            sf::Color skycolor;
             double player_x;
             double player_y;
             double brightness;
             double decay_factor;
 
-            Level(std::string n, int w, int h, sf::Color skclr, double br, double dec, double pl_x, double pl_y) : name(n), size(w, h), 
-                        skycolor(skclr), brightness(br), decay_factor(dec), player_x(pl_x), player_y(pl_y){
+            Level(std::string n, int w, int h, double br, double dec, double pl_x, double pl_y) : name(n), size(w, h), 
+                        brightness(br), decay_factor(dec), player_x(pl_x), player_y(pl_y){
                 lvl_map = std::make_unique<Block[]>(w * h);
             }
 

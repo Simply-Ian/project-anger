@@ -13,9 +13,8 @@ class Player : public anger::Camera{
         /// @param mouse_x X-координата курсора
         void set_angle_mouse(int mouse_x, int win_w_without_borders, int border);
 
-        Player(double x, double y, double spd, const anger::Level& level, double plane_width, double d_t_p, 
-                    sf::Vector2u screen_res) : anger::Camera(level, x, y, plane_width, d_t_p, screen_res){ 
-            pos = {x, y};
+        Player(double spd, const anger::Level& level, double plane_width, double d_t_p, sf::Vector2u screen_res) : 
+                anger::Camera(level, level.player_x, level.player_y, plane_width, d_t_p, screen_res){ 
             speed = spd;
         }
 };

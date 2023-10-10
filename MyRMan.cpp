@@ -1,6 +1,15 @@
 #include "MyRMan.h"
 #include <fstream>
 #include "os/get_default_font_filename.h"
+#include <filesystem>
+
+void MyLevel::load_textures(std::vector<std::string> textures_names){
+    for(std::string name: textures_names){
+       std::shared_ptr<sf::Image> image = std::make_shared<sf::Image>();
+        image->loadFromFile(std::filesystem::path("assets") / "textures" / name);
+        textures.insert({name, {image}});
+    }
+}
 
 MyRMan::MyRMan(){
     font.loadFromFile(get_default_font_filename());
@@ -10,21 +19,32 @@ void MyRMan::load_level(std::string path){
     std::ifstream FILE(path);
     nlohmann::json j = nlohmann::json::parse(FILE);
     auto header = j["header"];
-    lvl = anger::Level{header["lvl_name"].template get<std::string>(), 
+    lvl = MyLevel{header["lvl_name"].template get<std::string>(), 
                 header["width"].template get<int>(),
                 header["height"].template get<int>(),
-                anger::color_from_hex(header["skycolor"].template get<std::string>()),
                 header["light-brightness"].template get<double>(),
                 header["light-decay-factor"].template get<double>(),
                 header["player-x"].template get<double>(),
                 header["player-y"].template get<double>()};
+
+    lvl.load_textures(header["textures"]);
 
     auto blocks = j["walls"];
     for (auto iter = blocks.begin(); iter != blocks.end(); iter++){
         int x = iter->at("x").template get<int>();
         int y = iter->at("y").template get<int>();
         sf::Color color = anger::color_from_hex(iter->at("color").template get<std::string>());
-        lvl.set_block(anger::Block{color, false}, x, y);
+        anger::Block to_set;
+        // Проверяем, заданы ли для данного блока текстуры.
+        if (iter->contains("t_right"))
+            to_set = anger::Block{
+                lvl.textures.at(iter->at("t_top")), 
+                lvl.textures.at(iter->at("t_bottom")),
+                lvl.textures.at(iter->at("t_right")), 
+                lvl.textures.at(iter->at("t_left")), 
+                color};
+        else to_set = anger::Block{color, false};
+        lvl.set_block(to_set, x, y);
     }
 }
 

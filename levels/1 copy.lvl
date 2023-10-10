@@ -38,12 +38,6 @@
         {"x":4, "y":7, "color": "#ffffff", "t_right": "stone_wall.jpg", "t_left": "stone_wall.jpg", "t_top": "stone_wall.jpg", "t_bottom": "stone_wall.jpg"},
         {"x":5, "y":7, "color": "#ffffff", "t_right": "stone_wall.jpg", "t_left": "stone_wall.jpg", "t_top": "stone_wall.jpg", "t_bottom": "stone_wall.jpg"},
         {"x":6, "y":7, "color": "#ffffff", "t_right": "stone_wall.jpg", "t_left": "stone_wall.jpg", "t_top": "stone_wall.jpg", "t_bottom": "stone_wall.jpg"},
-        {"x":7, "y":7, "color": "#ffffff", "t_right": "stone_wall.jpg", "t_left": "stone_wall.jpg", "t_top": "stone_wall.jpg", "t_bottom": "stone_wall.jpg"},
-        {"x": 2, "y": 2, "color": "#ff5f00", "t_right": "brick_wall.jpg", "t_left": "brick_wall.jpg", "t_top": "brick_wall.jpg", "t_bottom": "brick_wall.jpg"},
-        {"x": 3, "y": 2, "color": "#ff5f00", "t_right": "brick_wall.jpg", "t_left": "brick_wall.jpg", "t_top": "brick_wall.jpg", "t_bottom": "brick_wall.jpg"},
-        {"x": 3, "y": 3, "color": "#ff5f00", "t_right": "brick_wall.jpg", "t_left": "brick_wall.jpg", "t_top": "brick_wall.jpg", "t_bottom": "brick_wall.jpg"},
-        {"x": 5, "y": 4, "color": "#ffb300", "t_right": "brick_wall.jpg", "t_left": "yellow_wall.jpg", "t_top": "brick_wall.jpg", "t_bottom": "brick_wall.jpg"},
-        {"x": 5, "y": 5, "color": "#ffb300", "t_right": "brick_wall.jpg", "t_left": "yellow_wall.jpg", "t_top": "brick_wall.jpg", "t_bottom": "brick_wall.jpg"},
-        {"x": 5, "y": 6, "color": "#69bb44", "t_right": "brick_wall.jpg", "t_left": "green_wall.jpg" , "t_top": "brick_wall.jpg", "t_bottom": "brick_wall.jpg"}
+        {"x":7, "y":7, "color": "#ffffff", "t_right": "stone_wall.jpg", "t_left": "stone_wall.jpg", "t_top": "stone_wall.jpg", "t_bottom": "stone_wall.jpg"}
     ]
 }

@@ -1,5 +1,5 @@
 CXX=g++
-C_FLAGS=-g -std=c++17 -fdiagnostics-color=always -O
+C_FLAGS=-g -std=c++17 -fdiagnostics-color=always
 LDFLAGS=-lsfml-graphics -lsfml-system -lsfml-window
 SRCS = anger_engine/conversions/rads_degs.cpp anger_engine/ResourceManager.cpp anger_engine/WinManager.cpp main.cpp os/exec.cpp os/get_default_font_filename.cpp Player.cpp anger_engine/GameObject.cpp anger_engine/Camera.cpp miniMap.cpp MyRMan.cpp Game.cpp
 OBJS = $(SRCS:.cpp=.o)
@@ -18,4 +18,4 @@ run: $(OBJS)
 	$(CXX) $(C_FLAGS) $< -c -o $@
 
 clean:
-	rm -rf *.o
+	rm -r -f *.o
