@@ -7,11 +7,10 @@ using namespace anger;
 
 Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
     pos = {x, y};
-    cur_image.create(screen_res.x, screen_res.y);
-    cur_image.setSmooth(true);
+    // cur_image.create(screen_res.x, screen_res.y);
+    // cur_image.setSmooth(true);
     shot.create(screen_res.x, screen_res.y);
-    strip_px_buffer.create(1, 1080);
-    strip_texture.create(1, 1080);
+    buffer.create(screen_res.x, screen_res.y, sf::Color::Black);
 }
 
 Camera::Camera(const Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
@@ -123,7 +122,11 @@ sf::Color Camera::multiply_color(sf::Color source, double factor){
 }
 
 void Camera::takeImage(){
-    cur_image.clear();
+    // cur_image.clear();
+    for (int x = 0; x < screen_res.x; x++)
+        for (int y = 0; y < screen_res.y; y++)
+            buffer.setPixel(x, y, sf::Color::Black);
+            
     const double glob_lighting_factors[] = {level.brightness, level.brightness * 0.5, level.brightness * 0.75, level.brightness * 0.75};
 
     double plane_to_point;
@@ -142,16 +145,16 @@ void Camera::takeImage(){
 
         plane_to_point = calculate_dist_plane_to_point(seen_point.pos, plane_vect);
         raw_strip_height = screen_res.y  / plane_to_point;
+        strip_height = std::min(raw_strip_height, static_cast<int>(screen_res.y));
         brightness = glob_lighting_factors[seen_point.side];
         brightness = std::max(brightness * (1 - plane_to_point/level.decay_factor), 0.0);
 
         // Если блок просто закрашен цветом и не имеет текстур
         if (seen_point.block.t_right == nullptr){
-            strip_height = std::min(raw_strip_height, static_cast<int>(screen_res.y));
             drawableStrip.setSize({1, strip_height});
             drawableStrip.setFillColor(multiply_color(seen_point.block.color, brightness));
             drawableStrip.setPosition(offset, (screen_res.y - strip_height) / 2);
-            cur_image.draw(drawableStrip);
+            // cur_image.draw(drawableStrip);
         }
         // Блок затекстурирован
         else {
@@ -179,27 +182,24 @@ void Camera::takeImage(){
                 texture_offset = texture_width * (1 - (seen_point.pos.y - std::floor(seen_point.pos.y)));
                 skin = seen_point.block.t_right;
             }
-            bake_strip(texture_offset, raw_strip_height, brightness, skin);
-            strip.setPosition(offset, (screen_res.y - strip.getGlobalBounds().height) / 2);
-            cur_image.draw(strip);
+            draw_wall_strip({offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2}, texture_offset, raw_strip_height, brightness, skin);
+            // strip.setPosition(offset, (screen_res.y - strip.getGlobalBounds().height) / 2);
+            // cur_image.draw(strip);
         }
     }
-    cur_image.display();
-    shot = cur_image.getTexture();
+    shot.update(buffer);
+    
+    // cur_image.display();
+    // shot = cur_image.getTexture();
 }
 
-void Camera::bake_strip(int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin){
-    const int source_height = skin->getSize().y;
-    // Копируем столбец пикселов из оригинальной текстуры стены в буфер для затемнения
-    /// @todo Убрать std::min
-    // strip_px_buffer.copy(*skin, 0, 0, {std::min(x_offset, 1079), 0, 1, source_height});
-
-    // Применяем затемнение
-    for (size_t adv = 0; adv < source_height; adv++){
-        strip_px_buffer.setPixel(0, adv, multiply_color(skin->getPixel(x_offset, adv), brightness));
+void Camera::draw_wall_strip(sf::Vector2i pos, int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin){
+    // Y -- координата пикселя на текстуре-источнике
+    int source_px_y;
+    for (size_t adv = 0; adv < h; adv++){
+        if (pos.y + adv >= 0 && pos.y + adv < buffer.getSize().y){
+            source_px_y = std::floor(static_cast<double>(skin->getSize().y) * adv / h);
+            buffer.setPixel(pos.x, pos.y + adv, multiply_color(skin->getPixel(x_offset, source_px_y), brightness));
+        }
     }
-    strip_texture.update(strip_px_buffer);
-    strip.setTexture(strip_texture);
-    strip.setScale(1, static_cast<float>(h) / source_height);
-    int strip_size = strip.getGlobalBounds().height;
 }

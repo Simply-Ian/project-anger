@@ -70,34 +70,34 @@ void Game::handleMouse(){
 
 void Game::update(int framelength){
     wm->clear(sf::Color::Black);
-        sf::Event event;
-        while(wm->pollEvent(event)){
-            if (event.type == sf::Event::Closed) wm->close();
-            else if(event.type == sf::Event::KeyPressed){
-                if(event.key.code == sf::Keyboard::Escape) {
-                    is_paused = !is_paused;
-                    wm->setMouseCursorVisible(is_paused);
-                }
+    sf::Event event;
+    while(wm->pollEvent(event)){
+        if (event.type == sf::Event::Closed) wm->close();
+        else if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::Escape) {
+                is_paused = !is_paused;
+                wm->setMouseCursorVisible(is_paused);
             }
-            else if (event.type == sf::Event::Resized)
-                wm->onWinResize(event.size);
         }
+        else if (event.type == sf::Event::Resized)
+            wm->onWinResize(event.size);
+    }
 
-        if(!is_paused){
-            handleKeyboard(framelength);
-            handleMouse();
-        }
-        
-        int FPS = std::floor(1000 / framelength);
-        FPS_label.setString("FPS: " + std::to_string(FPS));
+    if(!is_paused){
+        handleKeyboard(framelength);
+        handleMouse();
+    }
+    
+    int FPS = std::floor(1000 / framelength);
+    FPS_label.setString("FPS: " + std::to_string(FPS));
 
-        player_pos_label.setString("x: " + std::to_string(player->getPos().x) + ", y=" + std::to_string(player->getPos().y) +
-                                     ", a=" + std::to_string(player->get_angle_degs()));
-        player->takeImage();
-        wm->canvas.setTexture(player->shot);
-        wm->draw(wm->canvas);
-        wm->draw(FPS_label);
-        wm->draw(player_pos_label);
+    player_pos_label.setString("x: " + std::to_string(player->getPos().x) + ", y=" + std::to_string(player->getPos().y) +
+                                 ", a=" + std::to_string(player->get_angle_degs()));
+    player->takeImage();
+    wm->canvas.setTexture(player->shot);
+    wm->draw(wm->canvas);
+    wm->draw(FPS_label);
+    wm->draw(player_pos_label);
 
-        wm->draw(mini_map.draw_minimap(player->getPos()));
+    wm->draw(mini_map.draw_minimap(player->getPos()));
 }
