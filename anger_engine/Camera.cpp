@@ -11,6 +11,10 @@ Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(l
     // cur_image.setSmooth(true);
     shot.create(screen_res.x, screen_res.y);
     buffer.create(screen_res.x, screen_res.y, sf::Color::Black);
+    glob_lighting_factors[0] = level.brightness;
+    glob_lighting_factors[1] = level.brightness * 0.5;
+    glob_lighting_factors[2] = level.brightness * 0.75;
+    glob_lighting_factors[3] = level.brightness * 0.75;
 }
 
 Camera::Camera(const Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
@@ -121,19 +125,20 @@ sf::Color Camera::multiply_color(sf::Color source, double factor){
     return {std::min(source.r * factor, 255.0), std::min(source.g * factor, 255.0), std::min(source.b * factor, 255.0)};
 }
 
-void Camera::takeImage(){
-    // cur_image.clear();
+void Camera::clear_buffer(){
     for (int x = 0; x < screen_res.x; x++)
         for (int y = 0; y < screen_res.y; y++)
-            buffer.setPixel(x, y, sf::Color::Black);
-            
-    const double glob_lighting_factors[] = {level.brightness, level.brightness * 0.5, level.brightness * 0.75, level.brightness * 0.75};
+            buffer.setPixel(x, y, {0, 0, 0, 0});
+}
+
+void Camera::takeImage(){
+    clear_buffer();
 
     double plane_to_point;
     double brightness;
     int raw_strip_height;
-    int strip_height;
-    sf::RectangleShape drawableStrip{{1, 0}};
+    // int strip_height;
+    // sf::RectangleShape drawableStrip{{1, 0}};
     double start_x;
     for (double offset = 0; offset < screen_res.x; offset++){
         start_x = offset * (1.0 / screen_res.x);
@@ -145,15 +150,15 @@ void Camera::takeImage(){
 
         plane_to_point = calculate_dist_plane_to_point(seen_point.pos, plane_vect);
         raw_strip_height = screen_res.y  / plane_to_point;
-        strip_height = std::min(raw_strip_height, static_cast<int>(screen_res.y));
+        // strip_height = std::min(raw_strip_height, static_cast<int>(screen_res.y));
         brightness = glob_lighting_factors[seen_point.side];
         brightness = std::max(brightness * (1 - plane_to_point/level.decay_factor), 0.0);
 
         // Если блок просто закрашен цветом и не имеет текстур
         if (seen_point.block.t_right == nullptr){
-            drawableStrip.setSize({1, strip_height});
-            drawableStrip.setFillColor(multiply_color(seen_point.block.color, brightness));
-            drawableStrip.setPosition(offset, (screen_res.y - strip_height) / 2);
+            // drawableStrip.setSize({1, strip_height});
+            // drawableStrip.setFillColor(multiply_color(seen_point.block.color, brightness));
+            // drawableStrip.setPosition(offset, (screen_res.y - strip_height) / 2);
             // cur_image.draw(drawableStrip);
         }
         // Блок затекстурирован
@@ -196,10 +201,11 @@ void Camera::takeImage(){
 void Camera::draw_wall_strip(sf::Vector2i pos, int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin){
     // Y -- координата пикселя на текстуре-источнике
     int source_px_y;
-    for (size_t adv = 0; adv < h; adv++){
-        if (pos.y + adv >= 0 && pos.y + adv < buffer.getSize().y){
+    int buffer_h = buffer.getSize().y;
+    for (size_t adv = std::max(0, -pos.y); adv < std::min(h, buffer_h - pos.y); adv++){
+        // if (pos.y + adv >= 0 && pos.y + adv < buffer.getSize().y){
             source_px_y = std::floor(static_cast<double>(skin->getSize().y) * adv / h);
             buffer.setPixel(pos.x, pos.y + adv, multiply_color(skin->getPixel(x_offset, source_px_y), brightness));
-        }
+        // }
     }
 }

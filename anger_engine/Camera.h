@@ -23,6 +23,10 @@ namespace anger{
         const anger::Level& level;
         sf::Vector2u screen_res;
 
+        /// @brief Коэффициенты затемнения разных граней кубов для имитации глобального освещения
+        double glob_lighting_factors[4];
+
+
         /// @brief  Текстура, на которую отрисовывается текущий кадр в getImage(). 
         sf::RenderTexture cur_image;
 
@@ -42,6 +46,9 @@ namespace anger{
         /// @param factor Коэффициент
         /// @return Затемненный цвет
         static sf::Color multiply_color(sf::Color source, double factor);
+
+        /// @brief Забивает буфер пикселами (0, 0, 0, 0)
+        void clear_buffer();
 
         public:
             /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,
