@@ -36,10 +36,10 @@ namespace anger{
         /// @brief Рисует в буфер столбец пикселей -- полоску стены
         /// @param pos позиция полоски в буфере
         /// @param x_offset Смещение столбца пикселов в исходном изображении (текстуре) относительно левого края изображения
-        /// @param h Высота столбца
+        /// @param h Высота столбца. double, чтобы избежать явного приведения в коде
         /// @param brightness Коэффициент яркости
         /// @param skin Указатель на текстуру
-        void draw_wall_strip(sf::Vector2i pos, int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin);
+        void draw_wall_strip(sf::Vector2i pos, int x_offset, double h, double brightness, std::shared_ptr<sf::Image> skin);
 
         /// @brief Умножает все компоненты заданного цвета на заданный коэффициент. Используется для затемнения
         /// @param source Исходный цвет

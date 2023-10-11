@@ -55,11 +55,13 @@ void miniMap::draw_zero_mark(){
 }
 
 void miniMap::draw_blocks(){
+    anger::Block bl;
+    sf::RectangleShape rect;
     for (int x = 0; x < R->lvl.size.x; x++){
         for (int y = 0; y < R->lvl.size.y; y++){
-            anger::Block bl = R->lvl.get_block(x, y);
+            bl = R->lvl.get_block(x, y);
             if (!bl.is_a_null_block){
-                sf::RectangleShape rect({block_size, block_size});
+                rect = sf::RectangleShape({block_size, block_size});
                 rect.setFillColor(bl.color);
                 rect.setPosition(x * block_size, inverse_y(y * block_size) - block_size);
                 texture.draw(rect);

@@ -32,62 +32,55 @@ double Camera::vert_intersect(int line_x, double start_x, double start_y, sf::Ve
 }
 
 touchdownData Camera::get_point_on_vert_line(sf::Vector2f ray_coords, double dot_x, double dot_y){
-    int line_x = ray_coords.x > 0 ? ceil(dot_x) : floor(dot_x);
+    int cur_x = ray_coords.x > 0 ? ceil(dot_x) : floor(dot_x);
     // Точка ближайшего пересечения с вертикальной линией. Фиксированный X
     //Начальное значение y-координаты точки пересечения
-    double init_y = vert_intersect(line_x, dot_x, dot_y, ray_coords);
-    touchdownData first_point = {{line_x, init_y}, ray_coords.x > 0? anger::Block::Side::Left : anger::Block::Side::Right,
-                                {}};
-    double new_y = init_y;
+    double init_y = vert_intersect(cur_x, dot_x, dot_y, ray_coords);
+    int x_step = ray_coords.x > 0 ? 1 : -1;
+    double y_step = vert_intersect(cur_x + x_step, dot_x, dot_y, ray_coords) - init_y;
+    touchdownData first_point = {{cur_x, init_y}, ray_coords.x > 0? anger::Block::Side::Left : anger::Block::Side::Right,
+                                {}, true};
+    double cur_y = init_y;
     Block touched;
-    if (0 <= init_y && init_y < level.size.y){
-        first_point.valid = true;
-        while(line_x >= 0 && line_x < level.size.x){
-            try{
-                touched = level.get_block(ray_coords.x > 0? line_x : line_x - 1, floor(first_point.pos.y));
-                if (touched.is_a_null_block){
-                    line_x += ray_coords.x > 0 ? 1 : -1;
-                    first_point.pos.y = vert_intersect(line_x, dot_x, dot_y, ray_coords);
-                }
-                else break;
-            }
-            catch (std::range_error){
-                first_point.valid = false;
-                break;
-            }
+    while ((0 <= cur_x && cur_x < level.size.x) && (0 <= cur_y && cur_y < level.size.y)){
+        touched = level.get_block(ray_coords.x > 0? cur_x : cur_x - 1, floor(cur_y));
+        if (touched.is_a_null_block){
+            cur_x += x_step;
+            cur_y += y_step;
         }
-        first_point.pos.x = line_x;
-        first_point.block = touched;
+        else {
+            first_point.pos = {cur_x, cur_y};
+            first_point.block = touched;
+            return first_point;
+        }
     }
+    first_point.valid = false;
     return first_point;
 }
 
 touchdownData Camera::get_point_on_hor_line(sf::Vector2f ray_coords, double dot_x, double dot_y) {
     // Точка ближайшего пересечения с горизонтальной линией. Фиксированный Y
-    int line_y = ray_coords.y > 0 ? ceil(dot_y) : floor(dot_y);
-    double init_x = hor_intersect(line_y, dot_x, dot_y, ray_coords);
-    touchdownData second_point = {{init_x, line_y}, ray_coords.y > 0? anger::Block::Side::Bottom : anger::Block::Side::Top,
-                                {}, false};
+    int cur_y = ray_coords.y > 0 ? ceil(dot_y) : floor(dot_y);
+    double init_x = hor_intersect(cur_y, dot_x, dot_y, ray_coords);
+    int y_step = ray_coords.y > 0 ? 1 : -1;
+    double x_step = hor_intersect(cur_y + y_step, dot_x, dot_y, ray_coords) - init_x;
+    touchdownData second_point = {{init_x, cur_y}, ray_coords.y > 0? anger::Block::Side::Bottom : anger::Block::Side::Top,
+                                {}, true};
+    double cur_x = init_x;
     Block touched;
-    if (0 <= init_x && init_x < level.size.x){
-        second_point.valid = true;
-        while(0 <= line_y && line_y < level.size.y){
-            try{
-                touched = level.get_block(floor(second_point.pos.x), ray_coords.y > 0? line_y : line_y - 1);
-                if (touched.is_a_null_block){
-                    line_y += ray_coords.y > 0 ? 1 : -1;
-                    second_point.pos.x = hor_intersect(line_y, dot_x, dot_y, ray_coords);
-                }
-                else break;
-            }
-            catch (std::range_error){
-                second_point.valid = false;
-                break;
-            }
+    while ((0 <= cur_x && cur_x < level.size.x) && (0 <= cur_y && cur_y < level.size.y)){
+        touched = level.get_block(floor(cur_x), ray_coords.y > 0? cur_y : cur_y - 1);
+        if (touched.is_a_null_block){
+            cur_x += x_step;
+            cur_y += y_step;
         }
-        second_point.pos.y = line_y;
-        second_point.block = touched;
+        else {
+            second_point.pos = {cur_x, cur_y};
+            second_point.block = touched;
+            return second_point;
+        }
     }
+    second_point.valid = false;
     return second_point;
 }
 
@@ -118,7 +111,8 @@ double Camera::calculate_dist_plane_to_point(sf::Vector2f point_pos, sf::Vector2
     double point_to_point = std::sqrt(std::pow(pos.x - point_pos.x, 2) + std::pow(pos.y - point_pos.y, 2));
     // Угол между плоскостью камеры и направлением от позиции игрока на точку (рад)
     double alpha = (atan2(point_pos.y - pos.y, point_pos.x - pos.x) - atan2(plane_vect.y, plane_vect.x));
-    return std::sin(alpha) * point_to_point;
+    double to_return = std::abs(std::sin(alpha)) * point_to_point; /// DEBUG
+    return to_return;
 }
 
 sf::Color Camera::multiply_color(sf::Color source, double factor){
@@ -140,10 +134,13 @@ void Camera::takeImage(){
     // int strip_height;
     // sf::RectangleShape drawableStrip{{1, 0}};
     double start_x;
+    sf::Vector2f plane_vect;
+    sf::Vector2f ray_coords;
+    sf::Vector2i strip_pos;
     for (double offset = 0; offset < screen_res.x; offset++){
         start_x = offset * (1.0 / screen_res.x);
-        sf::Vector2f plane_vect = {dir.y, -dir.x};
-        sf::Vector2f ray_coords = dir * static_cast<float>(distance_to_plane) + 
+        plane_vect = {dir.y, -dir.x};
+        ray_coords = dir * static_cast<float>(distance_to_plane) + 
                                     plane_vect * (static_cast<float>((start_x - 0.5) * plane_width));
 
         touchdownData seen_point = get_touchdown_coords(start_x, ray_coords, plane_vect);
@@ -187,25 +184,21 @@ void Camera::takeImage(){
                 texture_offset = texture_width * (1 - (seen_point.pos.y - std::floor(seen_point.pos.y)));
                 skin = seen_point.block.t_right;
             }
-            draw_wall_strip({offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2}, texture_offset, raw_strip_height, brightness, skin);
-            // strip.setPosition(offset, (screen_res.y - strip.getGlobalBounds().height) / 2);
-            // cur_image.draw(strip);
+            strip_pos = {offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2}; // DEBUG
+            draw_wall_strip(strip_pos, texture_offset, raw_strip_height, brightness, skin);
         }
     }
     shot.update(buffer);
-    
-    // cur_image.display();
-    // shot = cur_image.getTexture();
 }
 
-void Camera::draw_wall_strip(sf::Vector2i pos, int x_offset, int h, double brightness, std::shared_ptr<sf::Image> skin){
+void Camera::draw_wall_strip(sf::Vector2i pos, int x_offset, double h, double brightness, std::shared_ptr<sf::Image> skin){
     // Y -- координата пикселя на текстуре-источнике
     int source_px_y;
     int buffer_h = buffer.getSize().y;
-    for (size_t adv = std::max(0, -pos.y); adv < std::min(h, buffer_h - pos.y); adv++){
-        // if (pos.y + adv >= 0 && pos.y + adv < buffer.getSize().y){
-            source_px_y = std::floor(static_cast<double>(skin->getSize().y) * adv / h);
-            buffer.setPixel(pos.x, pos.y + adv, multiply_color(skin->getPixel(x_offset, source_px_y), brightness));
-        // }
+    size_t limit = std::min(static_cast<int>(h), buffer_h - pos.y);
+    int skin_height = skin->getSize().y;
+    for (size_t adv = std::max(0, -pos.y); adv < limit; adv++){
+        source_px_y = std::floor(skin_height * adv / h);
+        buffer.setPixel(pos.x, pos.y + adv, multiply_color(skin->getPixel(x_offset, source_px_y), brightness));
     }
 }
