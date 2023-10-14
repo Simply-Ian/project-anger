@@ -19,6 +19,7 @@ namespace anger{
 
     class Camera: public GameObject{
         double plane_width = 1;
+        double plane_height = 1;
         double distance_to_plane = 1.5;
         const anger::Level& level;
         sf::Vector2u screen_res;
@@ -33,13 +34,22 @@ namespace anger{
         /// @brief Графический буфер, куда попиксельно отрисовываются изображения.
         sf::Image buffer;
 
+        /// @brief Рассчитывает параметры для отрисовки полоски стены. Ничего не возвращает, изменяет значения по ссылкам.
+        void calc_wall_strip(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane_vect, std::shared_ptr<sf::Image>& skin,
+                    int& raw_strip_height, double& brightness, int& texture_offset);
+
         /// @brief Рисует в буфер столбец пикселей -- полоску стены
-        /// @param pos позиция полоски в буфере
+        /// @param strip_pos позиция полоски в буфере (на экране)
         /// @param x_offset Смещение столбца пикселов в исходном изображении (текстуре) относительно левого края изображения
         /// @param h Высота столбца. double, чтобы избежать явного приведения в коде
         /// @param brightness Коэффициент яркости
         /// @param skin Указатель на текстуру
-        void draw_wall_strip(sf::Vector2i pos, int x_offset, double h, double brightness, std::shared_ptr<sf::Image> skin);
+        void draw_wall_strip(sf::Vector2i strip_pos, int x_offset, double h, double brightness, std::shared_ptr<sf::Image> skin);
+
+        /// @brief Рисует попиксельно вертикальную полоску пола.
+        /// @param strip_pos позиция верхнего конца полоски в буфере (на экране)
+        /// @param proj_coords -- координаты 2D-луча зрения
+        void draw_floor_strip(double start_x, sf::Vector2i strip_pos, sf::Vector2f proj_coords);
 
         /// @brief Умножает все компоненты заданного цвета на заданный коэффициент. Используется для затемнения
         /// @param source Исходный цвет
@@ -49,6 +59,10 @@ namespace anger{
 
         /// @brief Забивает буфер пикселами (0, 0, 0, 0)
         void clear_buffer();
+
+        /// @brief Возвращает глобальные координаты точки на плоскости камеры, из которой исходит зрительный луч.
+        /// @param start_x Смещение относительно левого края плоскости камеры (в долях ширины плоскости)
+        sf::Vector2f get_start_point(double start_x);
 
         public:
             /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,

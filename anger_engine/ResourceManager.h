@@ -14,7 +14,7 @@ namespace anger{
     struct Level{
         private:
             std::unique_ptr<Block[]> lvl_map;
-
+            std::unique_ptr<std::shared_ptr<sf::Image>[]> floor_tiles;
         public:
             std::string name;
             sf::Vector2i size;
@@ -26,6 +26,7 @@ namespace anger{
             Level(std::string n, int w, int h, double br, double dec, double pl_x, double pl_y) : name(n), size(w, h), 
                         brightness(br), decay_factor(dec), player_x(pl_x), player_y(pl_y){
                 lvl_map = std::make_unique<Block[]>(w * h);
+                floor_tiles = std::make_unique<std::shared_ptr<sf::Image>[]>(w * h);
             }
 
             Level(){}
@@ -45,6 +46,23 @@ namespace anger{
                     }
                 }
                 std::cout << "Unable to set block (x: " << x << ", y: " << y << "). Invalid position" << std::endl;
+            }
+
+            std::shared_ptr<sf::Image> get_tile(int x, int y) const {
+                if (x >= 0 && size.x > x && y >= 0 && size.y > y)
+                    return floor_tiles[y * size.x + x];
+                else throw std::range_error{std::string("Invalid tile position: x=") + std::to_string(x) 
+                                            + ", y=" + std::to_string(y)};
+            }
+
+            void set_tile(std::shared_ptr<sf::Image> tile, int x, int y){
+                if (0 <= x && x < size.x){
+                    if (0 <= y && y < size.y){
+                        floor_tiles[y * size.x + x] = tile;
+                        return;
+                    }
+                }
+                std::cout << "Unable to set tile (x: " << x << ", y: " << y << "). Invalid position" << std::endl;
             }
     };
     sf::Color color_from_hex(std::string hex);

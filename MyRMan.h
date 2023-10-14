@@ -28,6 +28,10 @@ class MyRMan : public anger::ResourceManager{
         MyLevel lvl;
         void load_level(std::string path) override;
         void load_settings_file(std::string path) override;
+        /// @brief Зависимость MyRMan::load_level(). Загружает блоки стен.
+        /// @param j nlohmann::json объект
+        void load_walls(auto j);
+        void load_floor(auto j);
         int mini_map_screensize;
         sf::Color text_color;
         int small_text_size{12};

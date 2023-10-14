@@ -15,6 +15,29 @@ MyRMan::MyRMan(){
     font.loadFromFile(get_default_font_filename());
 }
 
+void MyRMan::load_walls(auto j){
+    auto blocks = j["walls"];
+    sf::Color color;
+    anger::Block to_set;
+    int x;
+    int y;
+    for (auto iter = blocks.begin(); iter != blocks.end(); iter++){
+        x = iter->at("x").template get<int>();
+        y = iter->at("y").template get<int>();
+        color = anger::color_from_hex(iter->at("color").template get<std::string>());
+        // Проверяем, заданы ли для данного блока текстуры.
+        if (iter->contains("t_right"))
+            to_set = anger::Block{
+                lvl.textures.at(iter->at("t_top")), 
+                lvl.textures.at(iter->at("t_bottom")),
+                lvl.textures.at(iter->at("t_right")), 
+                lvl.textures.at(iter->at("t_left")), 
+                color};
+        else to_set = anger::Block{color, false};
+        lvl.set_block(to_set, x, y);
+    }
+}
+
 void MyRMan::load_level(std::string path){
     std::ifstream FILE(path);
     nlohmann::json j = nlohmann::json::parse(FILE);
@@ -28,23 +51,22 @@ void MyRMan::load_level(std::string path){
                 header["player-y"].template get<double>()};
 
     lvl.load_textures(header["textures"]);
+    load_walls(j);
+    load_floor(j);
+}
 
-    auto blocks = j["walls"];
-    for (auto iter = blocks.begin(); iter != blocks.end(); iter++){
-        int x = iter->at("x").template get<int>();
-        int y = iter->at("y").template get<int>();
-        sf::Color color = anger::color_from_hex(iter->at("color").template get<std::string>());
-        anger::Block to_set;
-        // Проверяем, заданы ли для данного блока текстуры.
-        if (iter->contains("t_right"))
-            to_set = anger::Block{
-                lvl.textures.at(iter->at("t_top")), 
-                lvl.textures.at(iter->at("t_bottom")),
-                lvl.textures.at(iter->at("t_right")), 
-                lvl.textures.at(iter->at("t_left")), 
-                color};
-        else to_set = anger::Block{color, false};
-        lvl.set_block(to_set, x, y);
+void MyRMan::load_floor(auto j){
+    auto tiles = j["floor"];
+    int x;
+    int y;
+    std::string cur_texture;
+    for (auto iter = tiles.begin(); iter != tiles.end(); iter++){
+        x = iter->at("x").template get<int>();
+        y = iter->at("y").template get<int>();
+        cur_texture = iter->at("t").template get<std::string>();
+        if (lvl.textures.find(cur_texture) != lvl.textures.end()){ // Проверяем, что текстура с таким именем была загружена
+            lvl.set_tile(lvl.textures[cur_texture], x, y);
+        }
     }
 }
 
