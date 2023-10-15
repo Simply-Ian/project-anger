@@ -49,21 +49,22 @@ namespace anger{
             }
 
             std::shared_ptr<sf::Image> get_tile(int x, int y) const {
-                if (x >= 0 && size.x > x && y >= 0 && size.y > y)
+                if (valid_coords({x, y}))
                     return floor_tiles[y * size.x + x];
                 else throw std::range_error{std::string("Invalid tile position: x=") + std::to_string(x) 
                                             + ", y=" + std::to_string(y)};
             }
 
             void set_tile(std::shared_ptr<sf::Image> tile, int x, int y){
-                if (0 <= x && x < size.x){
-                    if (0 <= y && y < size.y){
-                        floor_tiles[y * size.x + x] = tile;
-                        return;
-                    }
+                if (valid_coords({x, y})){
+                    floor_tiles[y * size.x + x] = tile;
+                    return;
                 }
                 std::cout << "Unable to set tile (x: " << x << ", y: " << y << "). Invalid position" << std::endl;
             }
+
+            /// @brief Проверяет, являются ли переданные координаты действительными (не меньше 0 и не больше соотв. размера уровня)
+            bool valid_coords(sf::Vector2i coords) const;
     };
     sf::Color color_from_hex(std::string hex);
 

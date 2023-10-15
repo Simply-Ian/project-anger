@@ -4,6 +4,10 @@
 #include <iostream> // До появления логгера
 #include <sstream>
 
+bool anger::Level::valid_coords(sf::Vector2i coords) const{
+    return 0 <= coords.x && coords.x < size.x && 0 <= coords.y && coords.y < size.y;
+}
+
 sf::Color anger::color_from_hex(std::string hex){
     if (hex.size() >= 7){
         const char alphabet[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};

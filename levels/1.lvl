@@ -7,7 +7,7 @@
         "player-x": 4,
         "player-y": 2,
         "light-brightness": 0.6,
-        "light-decay-factor": 8,
+        "light-decay-factor": 20,
         "textures": ["brick_wall.jpg", "green_wall.jpg", "stone_wall.jpg", "yellow_wall.jpg", "yellow_tile.jpg", "violet_tile.jpg"]
     },
     "walls": [

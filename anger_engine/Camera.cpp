@@ -13,7 +13,7 @@ Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(l
     buffer.create(screen_res.x, screen_res.y, sf::Color::Black);
     glob_lighting_factors[0] = level.brightness;
     glob_lighting_factors[1] = level.brightness * 0.5;
-    glob_lighting_factors[2] = level.brightness * 0.75;
+    glob_lighting_factors[2] = level.brightness * 0.55;
     glob_lighting_factors[3] = level.brightness * 0.75;
 }
 
@@ -224,7 +224,15 @@ void Camera::draw_floor_strip(double start_x, sf::Vector2i strip_pos, sf::Vector
     cast_coords.y = std::sin(angle);
 
     double h;
+
+    // Координаты блока, отбрасывающего тень на текущий пиксел
+    int shadow_block_x;
+    int shadow_block_y;
+    const double glob_light_angle_ctg = 0.25;
+    bool is_shadow;
     for (size_t adv = 0; adv < strip_h; adv++){
+        is_shadow = false;
+
         px_y = strip_pos.y + adv;
         h = camera_z - (strip_pos.y + adv - screen_res.y / 2.f) / screen_res.y * plane_height;
         D = d * h / (camera_z - h);
@@ -232,11 +240,31 @@ void Camera::draw_floor_strip(double start_x, sf::Vector2i strip_pos, sf::Vector
         brightness = std::max(level.brightness * (1 - D/level.decay_factor), 0.0);
         texture_px_x = D * cast_coords.x + dot.x; // ГЛОБАЛЬНЫЕ координаты
         texture_px_y = D * cast_coords.y + dot.y;
+
+        shadow_block_y = std::ceil(texture_px_y );
+        shadow_block_x = std::floor(texture_px_x - glob_light_angle_ctg * (1 - (texture_px_y - std::floor(texture_px_y))));
+        if (level.valid_coords({shadow_block_x, shadow_block_y}))
+            if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
+                is_shadow = true;
+        
+        shadow_block_y = std::floor(texture_px_y);
+        shadow_block_x = std::floor(texture_px_x - glob_light_angle_ctg * (1 - (texture_px_y - std::floor(texture_px_y))));
+        if (level.valid_coords({shadow_block_x, shadow_block_y}))
+            if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
+                is_shadow = true;
+
+        shadow_block_y = std::ceil(texture_px_y);
+        shadow_block_x = std::floor(texture_px_x - glob_light_angle_ctg);
+        if (level.valid_coords({shadow_block_x, shadow_block_y}))
+            if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
+                is_shadow = true;
+        
         tile_skin = level.get_tile(static_cast<int>(texture_px_x), static_cast<int>(texture_px_y));
         if (tile_skin != nullptr){
             texture_px_rel_x = tile_skin->getSize().x * (texture_px_x - std::floor(texture_px_x));
             texture_px_rel_y = tile_skin->getSize().y * (texture_px_y - std::floor(texture_px_y));
-            buffer.setPixel(strip_pos.x, px_y, multiply_color(tile_skin->getPixel(texture_px_rel_x, texture_px_rel_y), brightness));
+            buffer.setPixel(strip_pos.x, px_y, multiply_color(tile_skin->getPixel(texture_px_rel_x, texture_px_rel_y), 
+                brightness * (is_shadow? 0.45 : 1)));
         }
     }
 }
