@@ -100,12 +100,6 @@ namespace anger{
             /// @brief Метод, ищущий точку пересечения заданного луча с горизонтальной стенкой некоторого блока
             /// @return объект touchdownData с данными о позиции касания и увиденном блоке
             anger::touchdownData get_point_on_hor_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
-
-            /// @brief Рассчитывает расстояние от заданной точки до ПРЯМОЙ (не отрезка!), представляющей плоскость камеры
-            /// @param point_pos глобальные координаты точки
-            /// @param plane_vect координаты вектора, задабщего плоскость камеры (повернутый dir, длина всегда равна 1)
-            /// @return расстояние от точки до прямой
-            double calculate_dist_plane_to_point(sf::Vector2f point_pos, sf::Vector2f plane_vect);
     };
 }
 #endif

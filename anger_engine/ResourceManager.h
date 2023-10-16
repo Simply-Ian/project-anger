@@ -64,7 +64,7 @@ namespace anger{
             }
 
             /// @brief Проверяет, являются ли переданные координаты действительными (не меньше 0 и не больше соотв. размера уровня)
-            bool valid_coords(sf::Vector2i coords) const;
+            bool valid_coords(sf::Vector2f coords) const;
     };
     sf::Color color_from_hex(std::string hex);
 

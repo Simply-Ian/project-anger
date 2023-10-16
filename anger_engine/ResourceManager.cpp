@@ -4,7 +4,7 @@
 #include <iostream> // До появления логгера
 #include <sstream>
 
-bool anger::Level::valid_coords(sf::Vector2i coords) const{
+bool anger::Level::valid_coords(sf::Vector2f coords) const{
     return 0 <= coords.x && coords.x < size.x && 0 <= coords.y && coords.y < size.y;
 }
 

@@ -12,9 +12,9 @@ Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(l
     shot.create(screen_res.x, screen_res.y);
     buffer.create(screen_res.x, screen_res.y, sf::Color::Black);
     glob_lighting_factors[0] = level.brightness;
-    glob_lighting_factors[1] = level.brightness * 0.5;
-    glob_lighting_factors[2] = level.brightness * 0.55;
-    glob_lighting_factors[3] = level.brightness * 0.75;
+    glob_lighting_factors[1] = level.brightness * 0.4;
+    glob_lighting_factors[2] = level.brightness * 0.6;
+    glob_lighting_factors[3] = level.brightness * 0.8;
 }
 
 Camera::Camera(const Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
@@ -48,7 +48,7 @@ touchdownData Camera::get_point_on_vert_line(sf::Vector2f ray_coords, double dot
                                 {}, true};
     double cur_y = init_y;
     Block touched;
-    while ((0 <= cur_x && cur_x < level.size.x) && (0 <= cur_y && cur_y < level.size.y)){
+    while (level.valid_coords({cur_x, cur_y})){
         touched = level.get_block(ray_coords.x > 0? cur_x : cur_x - 1, floor(cur_y));
         if (touched.is_a_null_block){
             cur_x += x_step;
@@ -74,7 +74,7 @@ touchdownData Camera::get_point_on_hor_line(sf::Vector2f ray_coords, double dot_
                                 {}, true};
     double cur_x = init_x;
     Block touched;
-    while ((0 <= cur_x && cur_x < level.size.x) && (0 <= cur_y && cur_y < level.size.y)){
+    while (level.valid_coords({cur_x, cur_y})){
         touched = level.get_block(floor(cur_x), ray_coords.y > 0? cur_y : cur_y - 1);
         if (touched.is_a_null_block){
             cur_x += x_step;
@@ -111,15 +111,6 @@ touchdownData Camera::get_touchdown_coords(double start_x, sf::Vector2f ray_coor
            (pow(second_point.pos.x - dot.x, 2) + pow(second_point.pos.y - dot.y, 2)) ? first_point : second_point;
 }
 
-double Camera::calculate_dist_plane_to_point(sf::Vector2f point_pos, sf::Vector2f plane_vect){
-    // Дистанция от позиции игрока до точки касания.
-    double point_to_point = std::sqrt(std::pow(pos.x - point_pos.x, 2) + std::pow(pos.y - point_pos.y, 2));
-    // Угол между плоскостью камеры и направлением от позиции игрока на точку (рад)
-    double alpha = (atan2(point_pos.y - pos.y, point_pos.x - pos.x) - atan2(plane_vect.y, plane_vect.x));
-    double to_return = std::abs(std::sin(alpha)) * point_to_point; /// DEBUG
-    return to_return;
-}
-
 sf::Color Camera::multiply_color(sf::Color source, double factor){
     return {std::min(source.r * factor, 255.0), std::min(source.g * factor, 255.0), std::min(source.b * factor, 255.0)};
 }
@@ -133,13 +124,20 @@ void Camera::clear_buffer(){
 void Camera::calc_wall_strip(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane_vect, std::shared_ptr<sf::Image>& skin,
                     int& raw_strip_height, double& brightness, int& texture_offset){
     touchdownData seen_point = get_touchdown_coords(start_x, ray_coords, plane_vect);
-    double plane_to_point = calculate_dist_plane_to_point(seen_point.pos, plane_vect);
+    // double plane_to_point = calculate_dist_plane_to_point(seen_point.pos, plane_vect);
+    sf::Vector2f start_dot = get_start_point(start_x);
+
+    // Расстояние от точки на плоскости камеры до стены
+    double dot_to_wall = std::sqrt(std::pow(start_dot.x - seen_point.pos.x, 2) + std::pow(start_dot.y - seen_point.pos.y, 2));
+
+    // Расстояние от камеры до точки на плоскости
+    double camera_to_dot = std::sqrt(std::pow(ray_coords.x, 2) + std::pow(ray_coords.y, 2));
     int texture_width;
 
-    raw_strip_height = screen_res.y  / plane_to_point; // Может принимать любые значения: хоть отрицательные, 
-                                                       // хоть большие вертикального разрешения экрана
+    // Может принимать любые значения: хоть отрицательные, хоть большие вертикального разрешения экрана
+    raw_strip_height = screen_res.y * (1 / plane_height) * (camera_to_dot / (camera_to_dot + dot_to_wall));
     brightness = glob_lighting_factors[seen_point.side];
-    brightness = std::max(brightness * (1 - plane_to_point/level.decay_factor), 0.0);
+    brightness = std::max(brightness * (1 - dot_to_wall/level.decay_factor), 0.0);
 
     if (seen_point.side == anger::Block::Side::Top){
         texture_width = seen_point.block.t_top->getSize().x;
