@@ -35,7 +35,7 @@ namespace anger{
         sf::Image buffer;
 
         /// @brief Рассчитывает параметры для отрисовки полоски стены. Ничего не возвращает, изменяет значения по ссылкам.
-        void calc_wall_strip(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane_vect, std::shared_ptr<sf::Image>& skin,
+        void calc_wall_strip(sf::Vector2f start_dot, sf::Vector2f ray_coords, sf::Vector2f plane_vect, std::shared_ptr<sf::Image>& skin,
                     int& raw_strip_height, double& brightness, int& texture_offset);
 
         /// @brief Рисует в буфер столбец пикселей -- полоску стены
@@ -49,7 +49,7 @@ namespace anger{
         /// @brief Рисует попиксельно вертикальную полоску пола.
         /// @param strip_pos позиция верхнего конца полоски в буфере (на экране)
         /// @param proj_coords -- координаты 2D-луча зрения
-        void draw_floor_strip(double start_x, sf::Vector2i strip_pos, sf::Vector2f proj_coords);
+        void draw_floor_strip(sf::Vector2f start_dot, sf::Vector2i strip_pos, sf::Vector2f proj_coords);
 
         /// @brief Умножает все компоненты заданного цвета на заданный коэффициент. Используется для затемнения
         /// @param source Исходный цвет
@@ -64,6 +64,37 @@ namespace anger{
         /// @param start_x Смещение относительно левого края плоскости камеры (в долях ширины плоскости)
         sf::Vector2f get_start_point(double start_x);
 
+    
+        /// @brief Возвращает координаты пересечения луча зрения и прямой с y = const (горизонтальной линией сетки)
+        // start_x, start_y -- глобальные координаты точки, из которой выходит луч
+        // line_y -- координата линии сетки, с которой ищется пересечение
+        // ray_coords -- координаты вектора, вдоль которого лежит луч зрения
+        double hor_intersect(int line_y, double start_x, double start_y, sf::Vector2f ray_coords) const;
+
+        /// @brief Возвращает координаты пересечения луча зрения и прямой с x = const (вертикальной линией сетки)
+        // start_x, start_y -- глобальные координаты точки, из которой выходит луч
+        // line_y -- координата линии сетки, с которой ищется пересечение
+        // ray_coords -- координаты вектора, вдоль которого лежит луч зрения
+        double vert_intersect(int line_x, double start_x, double start_y, sf::Vector2f ray_coords) const;
+
+        /// @brief Метод, ищущий точку пересечения заданного луча с вертикальной стенкой некоторого блока
+        /// @return объект touchdownData с данными о позиции касания и увиденном блоке
+        anger::touchdownData get_point_on_vert_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
+
+        /// @brief Метод, ищущий точку пересечения заданного луча с горизонтальной стенкой некоторого блока
+        /// @return объект touchdownData с данными о позиции касания и увиденном блоке
+        anger::touchdownData get_point_on_hor_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
+
+        /// @brief Возвращает координаты первого столкновения луча со стеной
+        /// @param start_x -- смещение по зрительной плоскости относительно ее левого конца (в долях от 1)
+        anger::touchdownData get_touchdown_coords(sf::Vector2f start_dot, sf::Vector2f ray_coords, sf::Vector2f plane);
+
+        /// @brief Используется при отрисовке пола для рисования теней.
+        /// @param glob_x Глобальные координаты текущего пикселя пола
+        /// @param glob_y Глобальные координаты текущего пикселя пола
+        /// @returns true, если данный пиксель находится в тени.
+        bool is_px_shadowed(double glob_x, double glob_y);
+
         public:
             /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,
             /// необходимо обратиться к этой текстуре
@@ -75,31 +106,6 @@ namespace anger{
             /// @brief Метод для рендеринга изображения, видимого камерой
             /// @param single_height экранная высота стены высотой 1
             void takeImage();
-
-            // Публичная только на время отладки
-            /// @brief Возвращает координаты первого столкновения луча со стеной
-            /// @param start_x -- смещение по зрительной плоскости относительно ее левого конца (в долях от 1)
-            anger::touchdownData get_touchdown_coords(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane);
-
-            /// @brief Возвращает координаты пересечения луча зрения и прямой с y = const (горизонтальной линией сетки)
-            // start_x, start_y -- глобальные координаты точки, из которой выходит луч
-            // line_y -- координата линии сетки, с которой ищется пересечение
-            // ray_coords -- координаты вектора, вдоль которого лежит луч зрения
-            double hor_intersect(int line_y, double start_x, double start_y, sf::Vector2f ray_coords) const;
-
-            /// @brief Возвращает координаты пересечения луча зрения и прямой с x = const (вертикальной линией сетки)
-            // start_x, start_y -- глобальные координаты точки, из которой выходит луч
-            // line_y -- координата линии сетки, с которой ищется пересечение
-            // ray_coords -- координаты вектора, вдоль которого лежит луч зрения
-            double vert_intersect(int line_x, double start_x, double start_y, sf::Vector2f ray_coords) const;
-
-            /// @brief Метод, ищущий точку пересечения заданного луча с вертикальной стенкой некоторого блока
-            /// @return объект touchdownData с данными о позиции касания и увиденном блоке
-            anger::touchdownData get_point_on_vert_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
-
-            /// @brief Метод, ищущий точку пересечения заданного луча с горизонтальной стенкой некоторого блока
-            /// @return объект touchdownData с данными о позиции касания и увиденном блоке
-            anger::touchdownData get_point_on_hor_line(sf::Vector2f ray_coords, double dot_x, double dot_y);
     };
 }
 #endif

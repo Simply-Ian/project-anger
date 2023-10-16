@@ -90,25 +90,21 @@ touchdownData Camera::get_point_on_hor_line(sf::Vector2f ray_coords, double dot_
     return second_point;
 }
 
-touchdownData Camera::get_touchdown_coords(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane){
-    // start_x -- смещение вдоль зрительной плоскости относительно ее левого конца. ЭТО НЕ ГЛОБАЛЬНАЯ КООРДИНАТА!
-    // Вычисляем глобальные координаты точки, из которой выходит луч
-    const double delta = plane_width * (start_x - 0.5);
-    sf::Vector2f dot = get_start_point(start_x);
+touchdownData Camera::get_touchdown_coords(sf::Vector2f start_dot, sf::Vector2f ray_coords, sf::Vector2f plane){
     touchdownData first_point;
     touchdownData second_point;
     Block touched;
 
     if (ray_coords.x != 0)
-        first_point = get_point_on_vert_line(ray_coords, dot.x, dot.y);
+        first_point = get_point_on_vert_line(ray_coords, start_dot.x, start_dot.y);
     if (ray_coords.y != 0)
-        second_point = get_point_on_hor_line(ray_coords, dot.x, dot.y);
+        second_point = get_point_on_hor_line(ray_coords, start_dot.x, start_dot.y);
 
     // Выбираем ближайшую точку
     if (!first_point.valid) return second_point;
     else if (!second_point.valid) return first_point;
-    else return (pow(first_point.pos.x - dot.x, 2) + pow(first_point.pos.y - dot.y, 2)) <=
-           (pow(second_point.pos.x - dot.x, 2) + pow(second_point.pos.y - dot.y, 2)) ? first_point : second_point;
+    else return (pow(first_point.pos.x - start_dot.x, 2) + pow(first_point.pos.y - start_dot.y, 2)) <=
+           (pow(second_point.pos.x - start_dot.x, 2) + pow(second_point.pos.y - start_dot.y, 2)) ? first_point : second_point;
 }
 
 sf::Color Camera::multiply_color(sf::Color source, double factor){
@@ -121,11 +117,9 @@ void Camera::clear_buffer(){
             buffer.setPixel(x, y, {0, 0, 0, 0});
 }
 
-void Camera::calc_wall_strip(double start_x, sf::Vector2f ray_coords, sf::Vector2f plane_vect, std::shared_ptr<sf::Image>& skin,
+void Camera::calc_wall_strip(sf::Vector2f start_dot, sf::Vector2f ray_coords, sf::Vector2f plane_vect, std::shared_ptr<sf::Image>& skin,
                     int& raw_strip_height, double& brightness, int& texture_offset){
-    touchdownData seen_point = get_touchdown_coords(start_x, ray_coords, plane_vect);
-    // double plane_to_point = calculate_dist_plane_to_point(seen_point.pos, plane_vect);
-    sf::Vector2f start_dot = get_start_point(start_x);
+    touchdownData seen_point = get_touchdown_coords(start_dot, ray_coords, plane_vect);
 
     // Расстояние от точки на плоскости камеры до стены
     double dot_to_wall = std::sqrt(std::pow(start_dot.x - seen_point.pos.x, 2) + std::pow(start_dot.y - seen_point.pos.y, 2));
@@ -176,12 +170,13 @@ void Camera::takeImage(){
         start_x = offset * (1.0 / screen_res.x);
         ray_coords = dir * static_cast<float>(distance_to_plane) + 
                                     plane_vect * (static_cast<float>((start_x - 0.5) * plane_width));
+        sf::Vector2f start_dot = get_start_point(start_x);
 
-        calc_wall_strip(start_x, ray_coords, plane_vect, skin, raw_strip_height, brightness, texture_offset);
+        calc_wall_strip(start_dot, ray_coords, plane_vect, skin, raw_strip_height, brightness, texture_offset);
         strip_pos = {offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2};
         draw_wall_strip(strip_pos, texture_offset, raw_strip_height, brightness, skin);
         if (strip_pos.y + raw_strip_height < screen_res.y)
-            draw_floor_strip(start_x, {strip_pos.x, strip_pos.y + raw_strip_height}, ray_coords);
+            draw_floor_strip(start_dot, {strip_pos.x, strip_pos.y + raw_strip_height}, ray_coords);
     }
     shot.update(buffer);
 }
@@ -198,19 +193,39 @@ void Camera::draw_wall_strip(sf::Vector2i strip_pos, int x_offset, double h, dou
     }
 }
 
-void Camera::draw_floor_strip(double start_x, sf::Vector2i strip_pos, sf::Vector2f proj_coords){
-    sf::Vector2f dot = get_start_point(start_x);
+bool Camera::is_px_shadowed(double glob_x, double glob_y){
+    const double glob_light_angle_ctg = 0.25;
+    
+    // Координаты блока, отбрасывающего тень на текущий пиксел
+    int shadow_block_y = std::ceil(glob_y);
+    int shadow_block_x = std::floor(glob_x - glob_light_angle_ctg * (1 - (glob_y - std::floor(glob_y))));
+    if (level.valid_coords({shadow_block_x, shadow_block_y}))
+        if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
+            return true;
+    
+    shadow_block_y = std::floor(glob_y);
+    shadow_block_x = std::floor(glob_x - glob_light_angle_ctg * (1 - (glob_y - std::floor(glob_y))));
+    if (level.valid_coords({shadow_block_x, shadow_block_y}))
+        if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
+            return true;
 
+    shadow_block_y = std::ceil(glob_y);
+    shadow_block_x = std::floor(glob_x - glob_light_angle_ctg);
+    if (level.valid_coords({shadow_block_x, shadow_block_y}))
+        if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
+            return true;
+    return false;
+}
+
+void Camera::draw_floor_strip(sf::Vector2f start_dot, sf::Vector2i strip_pos, sf::Vector2f proj_coords){
     // Расстояние от камеры до текущего столбца на плоскости
     double d = std::sqrt(std::pow(proj_coords.x, 2) + std::pow(proj_coords.y, 2));
     int strip_h = screen_res.y - strip_pos.y;
     int px_y; // Y - координата текущего пиксела на экране.
     const double camera_z = 0.5; // Высота камеры над полом в блоках
     double D; // Расстояние от dot (точки на прямой, представл. плоскость камеры) до видимой точки пола. См. рисунок
-
-    double texture_px_x; // ГЛОБАЛЬНЫЕ координаты видимой точки пола (в блоках)
-    double texture_px_y;
-
+    double px_glob_x; // ГЛОБАЛЬНЫЕ координаты видимой точки пола (в блоках)
+    double px_glob_y;
     int texture_px_rel_x; // Координаты видимой точки пола относительно плитки
     int texture_px_rel_y;
     std::shared_ptr<sf::Image> tile_skin;
@@ -220,49 +235,22 @@ void Camera::draw_floor_strip(double start_x, sf::Vector2i strip_pos, sf::Vector
     double angle = std::atan2(proj_coords.y, proj_coords.x); // Угол между лучем зрения и направлением глобальной оси Ox (рад)
     cast_coords.x = std::cos(angle);
     cast_coords.y = std::sin(angle);
-
     double h;
 
-    // Координаты блока, отбрасывающего тень на текущий пиксел
-    int shadow_block_x;
-    int shadow_block_y;
-    const double glob_light_angle_ctg = 0.25;
-    bool is_shadow;
     for (size_t adv = 0; adv < strip_h; adv++){
-        is_shadow = false;
-
         px_y = strip_pos.y + adv;
         h = camera_z - (strip_pos.y + adv - screen_res.y / 2.f) / screen_res.y * plane_height;
         D = d * h / (camera_z - h);
-
         brightness = std::max(level.brightness * (1 - D/level.decay_factor), 0.0);
-        texture_px_x = D * cast_coords.x + dot.x; // ГЛОБАЛЬНЫЕ координаты
-        texture_px_y = D * cast_coords.y + dot.y;
+        px_glob_x = D * cast_coords.x + start_dot.x; // ГЛОБАЛЬНЫЕ координаты
+        px_glob_y = D * cast_coords.y + start_dot.y;
 
-        shadow_block_y = std::ceil(texture_px_y );
-        shadow_block_x = std::floor(texture_px_x - glob_light_angle_ctg * (1 - (texture_px_y - std::floor(texture_px_y))));
-        if (level.valid_coords({shadow_block_x, shadow_block_y}))
-            if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
-                is_shadow = true;
-        
-        shadow_block_y = std::floor(texture_px_y);
-        shadow_block_x = std::floor(texture_px_x - glob_light_angle_ctg * (1 - (texture_px_y - std::floor(texture_px_y))));
-        if (level.valid_coords({shadow_block_x, shadow_block_y}))
-            if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
-                is_shadow = true;
-
-        shadow_block_y = std::ceil(texture_px_y);
-        shadow_block_x = std::floor(texture_px_x - glob_light_angle_ctg);
-        if (level.valid_coords({shadow_block_x, shadow_block_y}))
-            if (!level.get_block(shadow_block_x, shadow_block_y).is_a_null_block)
-                is_shadow = true;
-        
-        tile_skin = level.get_tile(static_cast<int>(texture_px_x), static_cast<int>(texture_px_y));
+        tile_skin = level.get_tile(static_cast<int>(px_glob_x), static_cast<int>(px_glob_y));
         if (tile_skin != nullptr){
-            texture_px_rel_x = tile_skin->getSize().x * (texture_px_x - std::floor(texture_px_x));
-            texture_px_rel_y = tile_skin->getSize().y * (texture_px_y - std::floor(texture_px_y));
+            texture_px_rel_x = tile_skin->getSize().x * (px_glob_x - std::floor(px_glob_x));
+            texture_px_rel_y = tile_skin->getSize().y * (px_glob_y - std::floor(px_glob_y));
             buffer.setPixel(strip_pos.x, px_y, multiply_color(tile_skin->getPixel(texture_px_rel_x, texture_px_rel_y), 
-                brightness * (is_shadow? 0.45 : 1)));
+                brightness * (is_px_shadowed(px_glob_x, px_glob_y)? 0.45 : 1)));
         }
     }
 }
