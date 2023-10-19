@@ -1,14 +1,16 @@
 {
     "header": {
-        "spec_version": "0.0",
+        "spec_version": "0.2",
         "lvl_name": "test_level",
         "height": 8,
         "width": 8,
         "player-x": 4,
         "player-y": 2,
         "light-brightness": 0.6,
-        "light-decay-factor": 20,
-        "textures": ["brick_wall.jpg", "green_wall.jpg", "stone_wall.jpg", "yellow_wall.jpg", "yellow_tile.jpg", "violet_tile.jpg"]
+        "light-decay-factor": 12,
+        "shadow-depth-factor": 0.55,
+        "textures": ["brick_wall.jpg", "green_wall.jpg", "stone_wall.jpg", "yellow_wall.jpg", "yellow_tile.jpg", "violet_tile.jpg", "sunrise.png"],
+        "sky_bg": "sunrise.png"
     },
     "walls": [
         {"x":0, "y":0, "color": "#ffffff", "t_right": "stone_wall.jpg", "t_left": "stone_wall.jpg", "t_top": "stone_wall.jpg", "t_bottom": "stone_wall.jpg"},

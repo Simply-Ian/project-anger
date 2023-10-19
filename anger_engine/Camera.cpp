@@ -163,7 +163,7 @@ void Camera::takeImage(){
     double start_x;
     sf::Vector2f plane_vect = {dir.y, -dir.x};;
     sf::Vector2f ray_coords;
-    sf::Vector2i strip_pos;
+    sf::Vector2i wall_strip_pos;
     std::shared_ptr<sf::Image> skin;
     int texture_offset; // Смещение столбца пикселей на исходной текстуре относительно левого края
     for (double offset = 0; offset < screen_res.x; offset++){
@@ -173,10 +173,12 @@ void Camera::takeImage(){
         sf::Vector2f start_dot = get_start_point(start_x);
 
         calc_wall_strip(start_dot, ray_coords, plane_vect, skin, raw_strip_height, brightness, texture_offset);
-        strip_pos = {offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2};
-        draw_wall_strip(strip_pos, texture_offset, raw_strip_height, brightness, skin);
-        if (strip_pos.y + raw_strip_height < screen_res.y)
-            draw_floor_strip(start_dot, {strip_pos.x, strip_pos.y + raw_strip_height}, ray_coords);
+        wall_strip_pos = {offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2};
+
+        draw_sky_strip(offset, std::max(wall_strip_pos.y, 0), ray_coords);
+        draw_wall_strip(wall_strip_pos, texture_offset, raw_strip_height, brightness, skin);
+        if (wall_strip_pos.y + raw_strip_height < screen_res.y)
+            draw_floor_strip(start_dot, {wall_strip_pos.x, wall_strip_pos.y + raw_strip_height}, ray_coords);
     }
     shot.update(buffer);
 }
@@ -250,7 +252,19 @@ void Camera::draw_floor_strip(sf::Vector2f start_dot, sf::Vector2i strip_pos, sf
             texture_px_rel_x = tile_skin->getSize().x * (px_glob_x - std::floor(px_glob_x));
             texture_px_rel_y = tile_skin->getSize().y * (px_glob_y - std::floor(px_glob_y));
             buffer.setPixel(strip_pos.x, px_y, multiply_color(tile_skin->getPixel(texture_px_rel_x, texture_px_rel_y), 
-                brightness * (is_px_shadowed(px_glob_x, px_glob_y)? 0.45 : 1)));
+                brightness * (is_px_shadowed(px_glob_x, px_glob_y)? level.shadow_depth_factor : 1)));
         }
+    }
+}
+
+void Camera::draw_sky_strip(int strip_scr_x, int strip_h, sf::Vector2f proj_coords){
+    int px_source_y;
+    const double pi_2 = M_PI * 2;
+    const sf::Vector2u bg_size = level.sky->getSize();
+    const int px_source_x = std::fmod(std::atan2(proj_coords.y, proj_coords.x) + pi_2, pi_2) / (pi_2) * bg_size.x;
+    const double half_screen_h = screen_res.y / 2.0;
+    for (size_t adv = 0; adv < strip_h; adv++){
+        px_source_y = adv / half_screen_h * bg_size.y;
+        buffer.setPixel(strip_scr_x, adv, level.sky->getPixel(px_source_x, px_source_y));
     }
 }

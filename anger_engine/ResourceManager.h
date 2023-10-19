@@ -22,6 +22,8 @@ namespace anger{
             double player_y;
             double brightness;
             double decay_factor;
+            double shadow_depth_factor;
+            std::shared_ptr<sf::Image> sky;
 
             Level(std::string n, int w, int h, double br, double dec, double pl_x, double pl_y) : name(n), size(w, h), 
                         brightness(br), decay_factor(dec), player_x(pl_x), player_y(pl_y){

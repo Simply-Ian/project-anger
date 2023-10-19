@@ -47,9 +47,16 @@ namespace anger{
         void draw_wall_strip(sf::Vector2i strip_pos, int x_offset, double h, double brightness, std::shared_ptr<sf::Image> skin);
 
         /// @brief Рисует попиксельно вертикальную полоску пола.
+        /// @param start_dot глобальные координаты (2D) точки на плоскости камеры, через которую проходит луч зрения
         /// @param strip_pos позиция верхнего конца полоски в буфере (на экране)
         /// @param proj_coords -- координаты 2D-луча зрения
         void draw_floor_strip(sf::Vector2f start_dot, sf::Vector2i strip_pos, sf::Vector2f proj_coords);
+
+        /// @brief Рисует попиксельно вертикальную полоску неба.
+        /// @param strip_scr_x X-координата полоски на экране
+        /// @param strip_h Высота полоски (px)
+        /// @param proj_coords -- координаты 2D-луча зрения
+        void draw_sky_strip(int strip_scr_x, int strip_h, sf::Vector2f proj_coords);
 
         /// @brief Умножает все компоненты заданного цвета на заданный коэффициент. Используется для затемнения
         /// @param source Исходный цвет
@@ -64,7 +71,6 @@ namespace anger{
         /// @param start_x Смещение относительно левого края плоскости камеры (в долях ширины плоскости)
         sf::Vector2f get_start_point(double start_x);
 
-    
         /// @brief Возвращает координаты пересечения луча зрения и прямой с y = const (горизонтальной линией сетки)
         // start_x, start_y -- глобальные координаты точки, из которой выходит луч
         // line_y -- координата линии сетки, с которой ищется пересечение

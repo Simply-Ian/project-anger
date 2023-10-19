@@ -49,10 +49,11 @@ void MyRMan::load_level(std::string path){
                 header["light-decay-factor"].template get<double>(),
                 header["player-x"].template get<double>(),
                 header["player-y"].template get<double>()};
-
+    lvl.shadow_depth_factor = header["shadow-depth-factor"].template get<double>();
     lvl.load_textures(header["textures"]);
     load_walls(j);
     load_floor(j);
+    lvl.sky = lvl.textures[header["sky_bg"].template get<std::string>()];
 }
 
 void MyRMan::load_floor(auto j){
