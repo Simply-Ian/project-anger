@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <iostream>
+#include <ctime>
 using namespace anger;
 
 Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(lvl), screen_res(s_r){
@@ -15,6 +16,26 @@ Camera::Camera(const Level& lvl, double x, double y, sf::Vector2u s_r) : level(l
     glob_lighting_factors[1] = level.brightness * 0.4;
     glob_lighting_factors[2] = level.brightness * 0.6;
     glob_lighting_factors[3] = level.brightness * 0.8;
+
+    init_render_threads();
+}
+
+void Camera::init_render_threads(){
+    // Оставляем свободные физические потоки: 1 для главного потока программы и, если возможно, 1 как резерв для ОС.
+    int phys_threads = std::thread::hardware_concurrency();
+    const int render_threads_num = phys_threads > 1? phys_threads - 1 : 1;
+    // const int render_threads_num = 1; // DEBUG
+    int scr_strip_w = screen_res.x / render_threads_num;
+    for (int i = 0; i < render_threads_num - 1; i++){
+        render_thread_pool.push_back(std::thread(&Camera::render_thread_inst, this, scr_strip_w * i, scr_strip_w));
+    }
+    // Левая граница полосы, за которую ответственен последний поток (если ширина экрана не делится нацело на количество потоков,
+    // последнему потоку достается полоса немногим шире, чем остальным)
+    const int last_thread_offset = scr_strip_w * (render_threads_num - 1);
+    const int last_thread_w = screen_res.x - last_thread_offset;
+    render_thread_pool.push_back(std::thread(&Camera::render_thread_inst, this, last_thread_offset, last_thread_w));
+    std::cout << render_thread_pool.size() << std::endl;
+
 }
 
 Camera::Camera(const Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r) : 
@@ -156,30 +177,17 @@ void Camera::calc_wall_strip(sf::Vector2f start_dot, sf::Vector2f ray_coords, sf
 };  
 
 void Camera::takeImage(){
-    clear_buffer();
+    clear_buffer(); // Потоки отрисовки в это время должны спать
+    wake_threads_mutex.lock();
+    threads_awoke = !threads_awoke;
+    wake_threads_mutex.unlock();
+    wake_threads.notify_all();
 
-    double brightness;
-    int raw_strip_height;
-    double start_x;
-    sf::Vector2f plane_vect = {dir.y, -dir.x};;
-    sf::Vector2f ray_coords;
-    sf::Vector2i wall_strip_pos;
-    std::shared_ptr<sf::Image> skin;
-    int texture_offset; // Смещение столбца пикселей на исходной текстуре относительно левого края
-    for (double offset = 0; offset < screen_res.x; offset++){
-        start_x = offset * (1.0 / screen_res.x);
-        ray_coords = dir * static_cast<float>(distance_to_plane) + 
-                                    plane_vect * (static_cast<float>((start_x - 0.5) * plane_width));
-        sf::Vector2f start_dot = get_start_point(start_x);
-
-        calc_wall_strip(start_dot, ray_coords, plane_vect, skin, raw_strip_height, brightness, texture_offset);
-        wall_strip_pos = {offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2};
-
-        draw_sky_strip(offset, std::max(wall_strip_pos.y, 0), ray_coords);
-        draw_wall_strip(wall_strip_pos, texture_offset, raw_strip_height, brightness, skin);
-        if (wall_strip_pos.y + raw_strip_height < screen_res.y)
-            draw_floor_strip(start_dot, {wall_strip_pos.x, wall_strip_pos.y + raw_strip_height}, ray_coords);
-    }
+    std::unique_lock<std::mutex> lock(ready_threads_num_mutex);
+    const int pool_size = this->render_thread_pool.size();
+    ready_threads.wait(lock, [&]{return this->ready_threads_num == pool_size;});
+    lock.unlock();
+    ready_threads_num = 0;
     shot.update(buffer);
 }
 
@@ -266,5 +274,59 @@ void Camera::draw_sky_strip(int strip_scr_x, int strip_h, sf::Vector2f proj_coor
     for (size_t adv = 0; adv < strip_h; adv++){
         px_source_y = adv / half_screen_h * bg_size.y;
         buffer.setPixel(strip_scr_x, adv, level.sky->getPixel(px_source_x, px_source_y));
+    }
+}
+
+void Camera::drawImagePart(int start_offset, int width){
+    double brightness;
+    int raw_strip_height;
+    double start_x;
+    sf::Vector2f plane_vect = {dir.y, -dir.x};;
+    sf::Vector2f ray_coords;
+    sf::Vector2i wall_strip_pos;
+    std::shared_ptr<sf::Image> skin;
+    int texture_offset; // Смещение столбца пикселей на исходной текстуре относительно левого края
+    sf::Vector2f start_dot;
+    const int finish = start_offset + width; // Правая граница полосы экрана, за которую ответственен данный поток
+
+    for (double offset = start_offset; offset < finish; offset++){
+        start_x = offset * (1.0 / screen_res.x);
+        ray_coords = dir * static_cast<float>(distance_to_plane) + 
+                                    plane_vect * (static_cast<float>((start_x - 0.5) * plane_width));
+        start_dot = get_start_point(start_x);
+
+        calc_wall_strip(start_dot, ray_coords, plane_vect, skin, raw_strip_height, brightness, texture_offset);
+        wall_strip_pos = {offset, (static_cast<int>(screen_res.y) - raw_strip_height) / 2};
+
+        draw_sky_strip(offset, std::max(wall_strip_pos.y, 0), ray_coords);
+        draw_wall_strip(wall_strip_pos, texture_offset, raw_strip_height, brightness, skin);
+        if (wall_strip_pos.y + raw_strip_height < screen_res.y)
+            draw_floor_strip(start_dot, {wall_strip_pos.x, wall_strip_pos.y + raw_strip_height}, ray_coords);
+    }
+}
+
+void Camera::render_thread_inst(int start_offset, int width){
+    bool waker = this->threads_awoke;
+    while (app_alive){
+        std::unique_lock<std::mutex> lock(wake_threads_mutex);
+        wake_threads.wait(lock, [&]{return this->threads_awoke != waker;});
+        lock.unlock();
+        waker = this->threads_awoke;
+        drawImagePart(start_offset, width);
+        ready_threads_num_mutex.lock();
+        ready_threads_num += 1;
+        ready_threads_num_mutex.unlock();
+        ready_threads.notify_one();
+    }
+}
+
+Camera::~Camera(){
+    app_alive = false;
+    wake_threads_mutex.lock();
+    threads_awoke = !threads_awoke;
+    wake_threads_mutex.unlock();
+    wake_threads.notify_all();
+    for (std::thread& t: render_thread_pool){
+        t.join();
     }
 }

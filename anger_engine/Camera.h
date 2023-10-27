@@ -7,6 +7,10 @@
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+#include <vector>
 
 namespace anger{
     /// @brief Информация о точке касания лучом стены
@@ -23,10 +27,37 @@ namespace anger{
         double distance_to_plane = 1.5;
         const anger::Level& level;
         sf::Vector2u screen_res;
+        std::vector<std::thread> render_thread_pool;
+
+        // Используется для подсчета потоков, закончивших отрисовку своей части данного кадра.
+        /* Каждый поток, закончивший работу, увеличивает счетчик ready_threads_num (защищен мьютексом) и оповещает главный поток.
+        Тот просыпается и проверяет количество. Отработавший поток отрисовки ожидает пробуждения через wake_threads.
+        Если все потоки отрисовки закончили свою работу, главный поток отрисовывает изоражение на экране, оповещает потоки отрисовки
+        через wake_threads и ожидает пробуждения через ready_threads.
+        */
+        std::condition_variable ready_threads;
+        int ready_threads_num = 0;
+        std::mutex ready_threads_num_mutex;
+
+        std::condition_variable wake_threads;
+        // При отрисовке каждого нового кадра главный поток ИНВЕРТИРУЕТ эту переменную. 
+        //Потоки отрисовки сохраняют ее значение себе и сравнивают ее значение с сохраненным при каждом пробуждении
+        bool threads_awoke = false; 
+        std::mutex wake_threads_mutex;
+
+        // Должна изменяться только главным потоком. Если false, потоки отрисовки прекращают работу.
+        bool app_alive = true;
+
+        /// @brief Создает потоки отрисовки. Вызывается один раз, в конструкторе камеры.
+        void init_render_threads();
+
+        /// @brief Запускается в каждом потоке отрисовки. Обертка над Camera::drawImagePart()
+        /// @param start_offset Смещение полосы изображения относительно левого края изображения
+        /// @param width ширина полосы
+        void render_thread_inst(int start_offset, int width);
 
         /// @brief Коэффициенты затемнения разных граней кубов для имитации глобального освещения
         double glob_lighting_factors[4];
-
 
         /// @brief  Текстура, на которую отрисовывается текущий кадр в getImage(). 
         sf::RenderTexture cur_image;
@@ -101,6 +132,11 @@ namespace anger{
         /// @returns true, если данный пиксель находится в тени.
         bool is_px_shadowed(double glob_x, double glob_y);
 
+        /// @brief Отрисовывает вертикальную полосу изображения. Должна запускаться в отдельном потоке.
+        /// @param start_offset Смещение полосы относительно левого края изображения
+        /// @param width ширина полосы
+        void drawImagePart(int start_offset, int width);
+
         public:
             /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,
             /// необходимо обратиться к этой текстуре
@@ -110,8 +146,8 @@ namespace anger{
             Camera(const anger::Level& lvl, double x, double y, double pw, double d_t_p, sf::Vector2u s_r);
 
             /// @brief Метод для рендеринга изображения, видимого камерой
-            /// @param single_height экранная высота стены высотой 1
             void takeImage();
+            ~Camera();
     };
 }
 #endif
