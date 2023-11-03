@@ -1,6 +1,6 @@
 {
     "header": {
-        "spec_version": "0.2",
+        "spec_version": "0.3",
         "lvl_name": "test_level",
         "height": 8,
         "width": 8,

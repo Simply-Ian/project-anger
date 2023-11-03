@@ -53,8 +53,12 @@ namespace anger{
             std::shared_ptr<sf::Image> get_tile(int x, int y) const {
                 if (valid_coords({x, y}))
                     return floor_tiles[y * size.x + x];
-                else throw std::range_error{std::string("Invalid tile position: x=") + std::to_string(x) 
-                                            + ", y=" + std::to_string(y)};
+                else {
+                    std::cout << std::string("Invalid tile position: x=") + std::to_string(x) 
+                                            + ", y=" + std::to_string(y) << std::endl;
+                    return nullptr;
+                }
+
             }
 
             void set_tile(std::shared_ptr<sf::Image> tile, int x, int y){

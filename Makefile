@@ -1,5 +1,5 @@
 CXX=g++
-C_FLAGS= -std=c++2a -fdiagnostics-color=always -Ofast -pthread
+C_FLAGS= -std=c++2a -fdiagnostics-color=always -g -pthread
 LDFLAGS=-lsfml-graphics -lsfml-system -lsfml-window -lpthread
 SRCS = anger_engine/conversions/rads_degs.cpp anger_engine/ResourceManager.cpp anger_engine/WinManager.cpp main.cpp os/exec.cpp os/get_default_font_filename.cpp Player.cpp anger_engine/GameObject.cpp anger_engine/Camera.cpp miniMap.cpp MyRMan.cpp Game.cpp
 OBJS = $(SRCS:.cpp=.o)

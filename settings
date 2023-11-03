@@ -1,9 +1,9 @@
 # Файл настроек для игры Project Anger. С символа # начинается однострочный комментарий. Каждый параметр описывается как
 # название: значение или название:значение
-FOV: 75
+FOV: 80
 camera-plane-width: 0.1
 adjust: 0
 mini-map-size: 250
 text-color: 200, 200, 200
 small-text-size: 16
-player-speed: 1
+player-speed: 1.4
