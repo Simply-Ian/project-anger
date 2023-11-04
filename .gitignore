@@ -2,3 +2,5 @@
 run
 .vscode
 callgrind.out.*
+levels/.idea
+levels/lcv/__pycache__
