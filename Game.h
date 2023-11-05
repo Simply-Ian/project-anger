@@ -28,7 +28,7 @@ class Game{
     void update(int framelength);
 
     sf::Text FPS_label;
-    sf::Text player_pos_label;
+    // sf::Text player_pos_label;
     sf::Text player_angle_label;
     /// @brief Подготавливает элементы GUI (в данном случае -- только текст с отладочной инфой). Вызывается в конструкторе.
     void prepare_gui();

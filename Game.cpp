@@ -26,10 +26,10 @@ void Game::prepare_gui(){
     FPS_label.setCharacterSize(R->small_text_size);
     FPS_label.setFillColor(R->text_color);
 
-    player_pos_label.setPosition(5, FPS_label.getPosition().y + FPS_label.getGlobalBounds().height + 5);
-    player_pos_label.setCharacterSize(R->small_text_size);
-    player_pos_label.setFillColor(R->text_color);
-    player_pos_label.setFont(R->font);
+    // player_pos_label.setPosition(5, FPS_label.getPosition().y + FPS_label.getGlobalBounds().height + 5);
+    // player_pos_label.setCharacterSize(R->small_text_size);
+    // player_pos_label.setFillColor(R->text_color);
+    // player_pos_label.setFont(R->font);
 }
 
 void Game::start(){
@@ -91,13 +91,13 @@ void Game::update(int framelength){
     int FPS = std::floor(1000 / framelength);
     FPS_label.setString("FPS: " + std::to_string(FPS));
 
-    player_pos_label.setString("x: " + std::to_string(player->getPos().x) + ", y=" + std::to_string(player->getPos().y) +
-                                 ", a=" + std::to_string(player->get_angle_degs()));
+    // player_pos_label.setString("x: " + std::to_string(player->getPos().x) + ", y=" + std::to_string(player->getPos().y) +
+    //                              ", a=" + std::to_string(player->get_angle_degs()));
     player->takeImage();
     wm->canvas.setTexture(player->shot);
     wm->draw(wm->canvas);
     wm->draw(FPS_label);
-    wm->draw(player_pos_label);
+    // wm->draw(player_pos_label);
 
     wm->draw(mini_map.draw_minimap(player->getPos()));
 }

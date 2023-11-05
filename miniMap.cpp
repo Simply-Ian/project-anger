@@ -8,7 +8,8 @@ void miniMap::prepare_minimap(){
     texture.create(R->lvl.size.x * 30, R->lvl.size.y * 30);
     texture.setView(mapView);
     mapSprite.setPosition(5, 5);
-    mapSprite.setScale({R->mini_map_screensize / texture.getSize().x, R->mini_map_screensize / texture.getSize().x});
+    mapSprite.setScale({R->mini_map_screensize / static_cast<float>(texture.getSize().x), 
+        R->mini_map_screensize / static_cast<float>(texture.getSize().x)});
 }
 
 sf::Sprite& miniMap::draw_minimap(sf::Vector2f player_pos){
@@ -24,15 +25,6 @@ sf::Sprite& miniMap::draw_minimap(sf::Vector2f player_pos){
     draw_blocks();
     draw_player(player_screen_x, player_screen_y);
     draw_zero_mark();
-
-    // Рисуем видимые поверхности
-    // for (double offset = 0; offset < R->screen_res.x; offset++){
-    //     sf::Vector2f touch_pos = O->cam.get_touchdown_coords(offset * (1.0 / R->screen_res.x)).pos;
-    //     sf::RectangleShape dot{{2, 2}};
-    //     dot.setFillColor(sf::Color::Magenta);
-    //     dot.setPosition(touch_pos.x * block_size, inverse_y(touch_pos.y * block_size));
-    //     texture.draw(dot);
-    // }
 
     texture.display();
     mapSprite.setTexture(texture.getTexture());
