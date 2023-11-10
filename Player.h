@@ -13,9 +13,11 @@ class Player : public anger::Camera{
         /// @param mouse_x X-координата курсора
         void set_angle_mouse(int mouse_x, int win_w_without_borders, int border);
 
-        Player(double spd, const anger::Level& level, double plane_width, double d_t_p, sf::Vector2u screen_res) : 
+        Player(double spd, const anger::Level& level, double plane_width, double d_t_p, sf::Vector2u screen_res, double c_b_w) : 
                 anger::Camera(level, level.player_x, level.player_y, plane_width, d_t_p, screen_res){ 
             speed = spd;
+            collide_box = sf::FloatRect(pos, {c_b_w, c_b_w});
         }
+        std::vector<Collision> get_collision() const override;
 };
 #endif

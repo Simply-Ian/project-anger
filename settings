@@ -2,8 +2,8 @@
 # название: значение или название:значение
 FOV: 80
 camera-plane-width: 0.1
-adjust: 0
 mini-map-size: 250
 text-color: 200, 200, 200
 small-text-size: 16
 player-speed: 1.4
+collision-box-size: 0.1

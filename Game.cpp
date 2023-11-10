@@ -8,7 +8,7 @@ Game::Game(std::string level_path){
 
     wm = std::make_unique<anger::WinManager>(R, "Project Anger");
     player = std::make_unique<Player>(R->player_speed, dynamic_cast<anger::Level&>(R->lvl), R->camera_plane_width, 
-            0.5 / std::tan(anger::to_rads(R->FOV / 2)) * R->camera_plane_width, wm->getScreenResolution());
+            0.5 / std::tan(anger::to_rads(R->FOV / 2)) * R->camera_plane_width, wm->getScreenResolution(), R->collision_box_size);
     
     // Готовим спрайт, текстуру и view для рисования мини-карты
     mini_map.prepare_minimap();

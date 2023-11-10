@@ -122,4 +122,6 @@ void MyRMan::set_up_field(std::string ident, std::string value){
         player_speed = atof(value.c_str());
     else if (ident == "camera-plane-width")
         camera_plane_width = atof(value.c_str());
+    else if (ident == "collision-box-size")
+        collision_box_size = atof(value.c_str());
 }

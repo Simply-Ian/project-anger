@@ -36,6 +36,7 @@ class MyRMan : public anger::ResourceManager{
         sf::Color text_color;
         int small_text_size{12};
         double player_speed;
+        double collision_box_size;
         sf::Font font;
         MyRMan();
 };

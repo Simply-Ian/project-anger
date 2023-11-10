@@ -25,7 +25,6 @@ namespace anger{
         double plane_width = 1;
         double plane_height = 1;
         double distance_to_plane = 1.5;
-        const anger::Level& level;
         sf::Vector2u screen_res;
         std::vector<std::thread> render_thread_pool;
 
@@ -136,6 +135,9 @@ namespace anger{
         /// @param start_offset Смещение полосы относительно левого края изображения
         /// @param width ширина полосы
         void drawImagePart(int start_offset, int width);
+
+        protected:
+            const anger::Level& level;
 
         public:
             /// @brief Текстура, хранящая текущий кадр. Если нужно получить изображение с данной камеры,
