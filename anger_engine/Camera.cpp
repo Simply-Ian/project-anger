@@ -149,7 +149,7 @@ void Camera::calc_wall_strip(sf::Vector2f start_dot, sf::Vector2f ray_coords, sf
     double camera_to_dot = std::sqrt(std::pow(ray_coords.x, 2) + std::pow(ray_coords.y, 2));
     int texture_width;
 
-    // Может принимать любые значения: хоть отрицательные, хоть большие вертикального разрешения экрана
+    // Может принимать любые значения: хоть отрицательные, хоть больше вертикального разрешения экрана
     raw_strip_height = screen_res.y * (1 / plane_height) * (camera_to_dot / (camera_to_dot + dot_to_wall));
     brightness = glob_lighting_factors[seen_point.side];
     brightness = std::max(brightness * (1 - dot_to_wall/level.decay_factor), 0.0);

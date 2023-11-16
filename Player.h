@@ -1,6 +1,8 @@
 #ifndef ANGER_PLAYER
 #define ANGER_PLAYER
 #include "anger_engine/Camera.h"
+/// @file Player.h
+/// @brief Заголовочный файл, в котором определяется класс игрока
 
 class Player : public anger::Camera{
     public:
@@ -18,6 +20,11 @@ class Player : public anger::Camera{
             speed = spd;
             collide_box = sf::FloatRect(pos, {c_b_w, c_b_w});
         }
+        /// @brief Метод для проверки, не столкнулся ли игрок со стеной.
+        /// @warning проверяет столкновения только со стенами (а кроме стен и игрока на уровне пока ничего и не может быть)
+        /// @return anger::GameObject::Collision::NONE, если в данный момент игрок не касается ни одной стены. Иначе
+        /// 1 соответствующее значение для каждой грани collision box-а, касающейся стены
+        /// @attention гарантирует, что в возвращенном векторе будут только уникальные значения
         std::vector<Collision> get_collision() const override;
 };
 #endif

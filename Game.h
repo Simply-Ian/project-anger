@@ -8,6 +8,8 @@
 #include "miniMap.h"
 #include <SFML/Graphics/Text.hpp>
 
+/// @file Game.h
+
 class Game{
     std::shared_ptr<MyRMan> R{std::make_shared<MyRMan>()};
 
@@ -27,11 +29,13 @@ class Game{
     /// @param framelength длительность предыдущего кадра (в мс)
     void update(int framelength);
 
+    /// @brief Надпись, показывающая игроку FPS
     sf::Text FPS_label;
-    // sf::Text player_pos_label;
-    sf::Text player_angle_label;
     /// @brief Подготавливает элементы GUI (в данном случае -- только текст с отладочной инфой). Вызывается в конструкторе.
     void prepare_gui();
+
+    /// @brief Спрайт, на котором должно рисоваться изображение, полученное с камеры.
+    sf::Sprite canvas;
 
     public:
         Game(std::string level_path);

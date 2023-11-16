@@ -94,8 +94,8 @@ void Game::update(int framelength){
     // player_pos_label.setString("x: " + std::to_string(player->getPos().x) + ", y=" + std::to_string(player->getPos().y) +
     //                              ", a=" + std::to_string(player->get_angle_degs()));
     player->takeImage();
-    wm->canvas.setTexture(player->shot);
-    wm->draw(wm->canvas);
+    canvas.setTexture(player->shot);
+    wm->draw(canvas);
     wm->draw(FPS_label);
     // wm->draw(player_pos_label);
 

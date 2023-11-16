@@ -5,13 +5,19 @@
 #include <SFML/Graphics/Rect.hpp>
 #include <vector>
 
+/// @file GameObject.h
+/// @brief В этом заголовочном файле определен класс GameObject
+
+/// @brief Базовый класс для игрока, камеры, а в перспективе -- источников освещения, антуража и врагов.
 class GameObject{
     protected:
-        // В блоках/с
+        /// @brief Скорость движения в блоках/с
         double speed = 0;
         sf::Vector2f pos;
+        /// @brief Вектор направления. -1 <= |x| <= 1; -1 <= |y| <= 1
         sf::Vector2f dir;
         sf::FloatRect collide_box;
+        /// @brief Элементы перечисления обозначают, касается ли collide box стен и какой гранью, если да.
         enum Collision {NONE, TOP, RIGHT, BOTTOM, LEFT};
 
     public:
