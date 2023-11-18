@@ -20,11 +20,11 @@ def read_lvl(filepath: str, w: int, h: int) -> List[List[str]]:
             # заполнить ее кодом плитки по умолчанию, иначе -- блоками стены по умолчанию
             if not raw_text:
                 if r < h - 1:
-                    matrix.append(['0000'] + [''] * (w - 1) + ['0000'])
+                    matrix.append(['0000'] + [''] * (w - 2) + ['0000'])
                 else:
                     matrix.append(['0000'] * w)
             else:
-                row = raw_text.replace('\n', '').split(' ')
+                row = raw_text.replace(' \n', '').split(' ')
 
                 __compl_row(row, w)
 

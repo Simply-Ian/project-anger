@@ -36,5 +36,5 @@ class UnpackedLevel:
     w: int
     floor_tiles: List[FloorTile]
     walls: List[Wall]
-    player_x: int
-    player_y: int
+    player_x: float
+    player_y: float

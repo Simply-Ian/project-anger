@@ -36,11 +36,11 @@ def conv(lvl: List[List[str]]) -> UnpackedLevel:
         for x, block in enumerate(row):
             info = __reco(block)
             if info.wall_or_tile:
-                walls.append(Wall(x, len(lvl) - y, [i for i in block]))
+                walls.append(Wall(x, len(lvl) - y - 1, [i for i in block]))
             else:
                 if info.is_player_spawn:
-                    player_y = len(lvl) - y
-                    player_x = x
+                    player_y = len(lvl) - y - 0.5
+                    player_x = x + 0.5
                     block = block.replace('>', '')
-                floor_tiles.append(FloorTile(x, len(lvl) - y, block))
+                floor_tiles.append(FloorTile(x, len(lvl) - y - 1, block))
     return UnpackedLevel(len(lvl), len(lvl[0]), floor_tiles, walls, player_x, player_y)

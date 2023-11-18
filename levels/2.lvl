@@ -6,8 +6,8 @@
         "width": 32,
         "player-x": 2,
         "player-y": 29,
-        "light-brightness": 1,
-        "light-decay-factor": 100,
+        "light-brightness": 0.8,
+        "light-decay-factor": 20,
         "shadow-depth-factor": 0.65,
         "textures": [
             "grass_tile.jpg",
